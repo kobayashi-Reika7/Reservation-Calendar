@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TextField } from '../components/InputForm';
-import { backendLogin } from '../services/backend';
+import { syncMe } from '../services/backend';
 import { login } from '../services/auth';
 
 function LoginPage() {
@@ -24,23 +24,24 @@ function LoginPage() {
     }
     setLoading(true);
     try {
-      // 1. バックエンド DB でメール・パスワードを照合
-      await backendLogin(email.trim(), password);
-      // 2. Firebase Auth でログイン（アプリ内セッション・Firestore 用 uid）
-      await login(email.trim(), password);
+      // Firebase Auth でログイン（認証は Firebase に一本化）
+      const cred = await login(email.trim(), password);
+      // バックエンドへ「ログイン済みユーザー情報」を同期（失敗してもログインは継続）
+      try {
+        const token = await cred.user.getIdToken();
+        await syncMe(token);
+      } catch {
+        // バックエンド未起動/管理者SDK未設定でも、ログインは継続する
+      }
       navigate('/calendar', { replace: true });
     } catch (err) {
       const code = err?.code ?? '';
-      const status = err?.status;
-      const detail = err?.detail ?? '';
-      if (status === 401 || code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
         setError('メールアドレスかパスワードが違います。');
       } else if (code === 'auth/invalid-email') {
         setError('メールアドレスの形式が正しくありません。');
-      } else if (detail) {
-        setError(typeof detail === 'string' ? detail : 'ログインできませんでした。');
       } else {
-        setError('ログインできませんでした。バックエンドが起動しているか確認してください。');
+        setError('ログインできませんでした。もう一度お試しください。');
       }
     } finally {
       setLoading(false);

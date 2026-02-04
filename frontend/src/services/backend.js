@@ -1,46 +1,22 @@
 /**
  * バックエンド API 呼び出し
- * 新規登録・ログイン照合をバックエンド DB に対して行う
+ * 認証は Firebase に一本化し、バックエンドには「ログイン済みユーザー情報」を同期する
  */
 const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8001';
 
 /**
- * 新規登録（バックエンド DB にユーザーを格納）
- * @param {string} email
- * @param {string} password
- * @returns {Promise<{ id: number, email: string }>}
+ * Firebase IDトークンを使って /users/me を呼び、バックエンドへユーザー情報を同期する
+ * @param {string} idToken
+ * @returns {Promise<{ uid: string, email: string }>}
  */
-export async function backendSignup(email, password) {
-  const res = await fetch(`${getBaseUrl()}/auth/signup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim(), password }),
+export async function syncMe(idToken) {
+  const res = await fetch(`${getBaseUrl()}/users/me`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${idToken}` },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(data.detail ?? '登録に失敗しました。');
-    err.status = res.status;
-    err.detail = data.detail;
-    throw err;
-  }
-  return data;
-}
-
-/**
- * ログイン照合（バックエンド DB でメール・パスワードを検証）
- * @param {string} email
- * @param {string} password
- * @returns {Promise<{ id: number, email: string }>}
- */
-export async function backendLogin(email, password) {
-  const res = await fetch(`${getBaseUrl()}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim(), password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const err = new Error(data.detail ?? 'ログインに失敗しました。');
+    const err = new Error(data.detail ?? 'ユーザー同期に失敗しました。');
     err.status = res.status;
     err.detail = data.detail;
     throw err;

@@ -13,7 +13,7 @@
 
 ### セットアップ
 
-**1. バックエンド（新規登録データを DB に格納・ログイン照合）**
+**1. バックエンド（Firebase IDトークン検証 / ユーザー同期）**
 
 ```bash
 cd backend
@@ -25,7 +25,7 @@ uvicorn main:app --reload --port 8001
 ```
 
 - API: http://localhost:8001
-- エンドポイント: `POST /auth/signup`（新規登録）, `POST /auth/login`（ログイン照合）, `GET /health`
+- エンドポイント: `GET /users/me`（IDトークン検証）, `GET /health`
 
 **2. フロントエンド**
 
@@ -38,7 +38,7 @@ npm run dev
 ```
 
 - ブラウザは http://localhost:5200 で開く（スマホ表示で確認推奨）
-- 新規登録・ログイン時は **バックエンドを先に起動** すること（DB に格納・照合のため）
+- バックエンドは **任意**（起動していなくてもログイン/予約は動きます）。起動していると `/users/me` で同期確認できます。
 - Firebase Console で **Authentication → サインイン方法 → メール/パスワード** を有効にすること
 - Firestore を有効にし、`users/{uid}/reservations` 用のセキュリティルールを設定すること
 
