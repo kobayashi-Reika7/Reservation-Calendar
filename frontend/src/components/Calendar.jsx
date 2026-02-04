@@ -23,12 +23,14 @@ function getCalendarDays(year, month) {
     d.setHours(0, 0, 0, 0);
     const isCurrentMonth = d.getMonth() === month;
     const isPast = d < today;
+    const isToday = d.getTime() === today.getTime();
     const isSelectable = isCurrentMonth && !isPast;
     days.push({
       date: d,
       label: d.getDate(),
       isCurrentMonth,
       isPast,
+      isToday,
       isSelectable,
       key: d.toISOString(),
     });
@@ -94,7 +96,9 @@ function Calendar({ selectedDate, onSelectDate }) {
             type="button"
             className={`calendar-day ${!day.isCurrentMonth ? 'calendar-day-other' : ''} ${
               day.isPast ? 'calendar-day-past' : ''
-            } ${day.isSelectable ? 'calendar-day-selectable' : ''} ${
+            } ${day.isToday ? 'calendar-day-today' : ''} ${
+              day.isSelectable ? 'calendar-day-selectable' : ''
+            } ${
               selectedDate &&
               day.date.getTime() === selectedDate.getTime()
                 ? 'calendar-day-selected'
@@ -102,9 +106,10 @@ function Calendar({ selectedDate, onSelectDate }) {
             }`}
             onClick={() => handleDayClick(day)}
             disabled={!day.isSelectable}
-            aria-label={`${day.date.getMonth() + 1}月${day.label}日`}
+            aria-label={day.isToday ? `今日、${day.date.getMonth() + 1}月${day.label}日` : `${day.date.getMonth() + 1}月${day.label}日`}
           >
-            {day.label}
+            <span className="calendar-day-num">{day.label}</span>
+            {day.isToday && <span className="calendar-day-badge">今日</span>}
           </button>
         ))}
       </div>

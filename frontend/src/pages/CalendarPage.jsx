@@ -19,7 +19,9 @@ function CalendarPage() {
   return (
     <div className="page page-calendar">
       <h1 className="page-title">予約日を選んでください</h1>
-      <p className="page-lead">日付をタップすると、予約内容の入力画面へ進みます。</p>
+      <p className="page-lead calendar-hint">
+        選べる日（白い日付）をタップ → 予約内容の入力画面へ進みます。
+      </p>
       <Calendar selectedDate={selectedDate} onSelectDate={handleSelectDate} />
     </div>
   );

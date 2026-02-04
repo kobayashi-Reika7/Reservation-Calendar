@@ -1,6 +1,7 @@
 /**
  * 予約確認画面
- * 内容確認後、Firestore に予約を保存し、完了メッセージを表示
+ * 「この内容で予約しますか？」が一目で分かるカード表示。
+ * 修正する / 予約を確定する を明確に分け、保存中はローディング表示。
  */
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -17,8 +18,8 @@ function ReserveConfirmPage() {
     category,
     department,
     purpose,
-    doctorName,
-    slot,
+    doctor,
+    time,
   } = state;
 
   const [loading, setLoading] = useState(false);
@@ -26,31 +27,30 @@ function ReserveConfirmPage() {
   const [done, setDone] = useState(false);
 
   const handleConfirm = async () => {
-    if (!user?.uid || !selectedDate || !slot) {
+    if (!user?.uid || !selectedDate || !time) {
       setError('予約情報が不足しています。');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await createReservation({
-        userId: user.uid,
+      await createReservation(user.uid, {
         date: selectedDate,
-        slot,
+        time,
         category: category ?? '',
         department: department ?? '',
         purpose: purpose ?? '',
-        doctorName: doctorName ?? '',
+        doctor: doctor ?? '',
       });
       setDone(true);
     } catch (err) {
-      setError(err?.message ?? '予約の保存に失敗しました。');
+      setError(err?.message ?? '予約の保存に失敗しました。もう一度お試しください。');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!selectedDate || !slot) {
+  if (!selectedDate || !time) {
     return (
       <div className="page">
         <p className="page-error">予約内容がありません。</p>
@@ -64,14 +64,13 @@ function ReserveConfirmPage() {
   if (done) {
     return (
       <div className="page page-confirm-done">
-        <h1 className="page-title">予約が完了しました</h1>
-        <div className="confirm-summary">
-          <p><strong>日付:</strong> {selectedDate}</p>
-          <p><strong>時間:</strong> {slot}</p>
-          <p><strong>大分類:</strong> {category}</p>
-          <p><strong>診療科:</strong> {department}</p>
-          <p><strong>目的:</strong> {purpose}</p>
-          <p><strong>担当医:</strong> {doctorName}</p>
+        <h1 className="page-title confirm-done-title">予約が完了しました</h1>
+        <div className="confirm-card">
+          <p><span className="confirm-label">日付</span> {selectedDate}</p>
+          <p><span className="confirm-label">時間</span> {time}</p>
+          <p><span className="confirm-label">診療科</span> {department}</p>
+          <p><span className="confirm-label">目的</span> {purpose}</p>
+          <p><span className="confirm-label">担当医</span> {doctor}</p>
         </div>
         <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar')}>
           カレンダーに戻る
@@ -82,32 +81,42 @@ function ReserveConfirmPage() {
 
   return (
     <div className="page page-reserve-confirm">
-      <h1 className="page-title">予約内容の確認</h1>
-      <div className="confirm-summary">
-        <p><strong>日付:</strong> {selectedDate}</p>
-        <p><strong>時間:</strong> {slot}</p>
-        <p><strong>大分類:</strong> {category}</p>
-        <p><strong>診療科:</strong> {department}</p>
-        <p><strong>目的:</strong> {purpose}</p>
-        <p><strong>担当医:</strong> {doctorName}</p>
+      <h1 className="page-title confirm-question">この内容で予約しますか？</h1>
+
+      <div className="confirm-card">
+        <p><span className="confirm-label">日付</span> {selectedDate}</p>
+        <p><span className="confirm-label">時間</span> {time}</p>
+        <p><span className="confirm-label">大分類</span> {category}</p>
+        <p><span className="confirm-label">診療科</span> {department}</p>
+        <p><span className="confirm-label">目的</span> {purpose}</p>
+        <p><span className="confirm-label">担当医</span> {doctor}</p>
       </div>
+
       {error && <p className="page-error" role="alert">{error}</p>}
-      <button
-        type="button"
-        className="btn btn-primary"
-        onClick={handleConfirm}
-        disabled={loading}
-      >
-        {loading ? '保存中…' : '予約を確定する'}
-      </button>
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={() => navigate(-1)}
-        disabled={loading}
-      >
-        戻る
-      </button>
+
+      {loading ? (
+        <div className="confirm-loading" aria-live="polite">
+          <span className="confirm-loading-spinner" aria-hidden="true" />
+          <span>保存中…</span>
+        </div>
+      ) : (
+        <div className="confirm-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleConfirm}
+          >
+            予約を確定する
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate(-1)}
+          >
+            修正する
+          </button>
+        </div>
+      )}
     </div>
   );
 }

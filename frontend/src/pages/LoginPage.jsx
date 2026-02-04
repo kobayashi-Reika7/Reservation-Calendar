@@ -28,11 +28,11 @@ function LoginPage() {
     } catch (err) {
       const code = err?.code ?? '';
       if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-        setError('メールアドレスまたはパスワードが正しくありません。');
+        setError('メールアドレスかパスワードが違います。');
       } else if (code === 'auth/invalid-email') {
         setError('メールアドレスの形式が正しくありません。');
       } else {
-        setError(err?.message ?? 'ログインに失敗しました。');
+        setError('ログインできませんでした。もう一度お試しください。');
       }
     } finally {
       setLoading(false);

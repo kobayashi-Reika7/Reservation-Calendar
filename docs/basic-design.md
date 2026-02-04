@@ -34,9 +34,9 @@ frontend/src/
 
 ## データ設計（Firestore）
 
-- **コレクション**: `reservations`
-- **フィールド**: userId, date（YYYY-MM-DD）, slot（例 09:00）, category, department, purpose, doctorName, createdAt
-- 同一 date + slot の重複は不可（reservation.js でチェック）
+- **構造**: `users/{uid}/reservations/{reservationId}`
+- **フィールド**: date（YYYY-MM-DD）, time（例 09:00）, category, department, purpose, doctor, createdAt
+- 同一ユーザーで同一 date + time の重複は不可（reservation.js でチェック）
 
 ## 技術選定
 

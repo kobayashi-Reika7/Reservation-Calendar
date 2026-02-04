@@ -38,7 +38,7 @@ function SignupPage() {
       } else if (code === 'auth/weak-password') {
         setError('パスワードは6文字以上にしてください。');
       } else {
-        setError(err?.message ?? '登録に失敗しました。');
+        setError('登録できませんでした。もう一度お試しください。');
       }
     } finally {
       setLoading(false);

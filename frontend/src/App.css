@@ -356,7 +356,217 @@ body {
   cursor: not-allowed;
 }
 
-/* ========== 予約確認・完了 ========== */
+.calendar-day-num {
+  display: block;
+}
+
+.calendar-day-today:not(.calendar-day-past) {
+  border: 2px solid #2563eb;
+  font-weight: 600;
+}
+
+.calendar-day-badge {
+  display: block;
+  font-size: 0.6rem;
+  margin-top: 1px;
+  color: #2563eb;
+}
+
+.calendar-day-selected .calendar-day-badge {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.calendar-hint {
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ========== 予約入力フォーム（段階表示・選択状態可視） ========== */
+.form-step-lead {
+  margin-bottom: 1.5rem;
+}
+
+.reserve-form {
+  margin-bottom: 1rem;
+}
+
+.form-step {
+  margin-bottom: 1.75rem;
+}
+
+.form-step-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem;
+}
+
+.form-step-done {
+  font-size: 0.9rem;
+  color: #059669;
+  margin: 0.5rem 0 0;
+}
+
+.choice-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.choice-buttons-wrap {
+  flex-wrap: wrap;
+}
+
+.choice-btn {
+  min-height: 48px;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.choice-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.choice-btn-selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.choice-btn-full {
+  width: 100%;
+  text-align: left;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.time-slot-btn {
+  min-height: 48px;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.time-slot-btn:hover:not(.time-slot-btn-disabled) {
+  border-color: #2563eb;
+  background: #f0f9ff;
+}
+
+.time-slot-btn-selected {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
+
+.time-slot-btn-disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.form-submit {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ========== 予約確認・完了（カード・修正/確定・ローディング） ========== */
+.confirm-question {
+  font-size: 1.25rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.confirm-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.confirm-card p {
+  margin: 0.75rem 0;
+  font-size: 1rem;
+}
+
+.confirm-label {
+  display: inline-block;
+  min-width: 4.5rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.confirm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.confirm-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: confirm-spin 0.8s linear infinite;
+}
+
+@keyframes confirm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.confirm-actions .btn-primary {
+  order: -1;
+}
+
+.confirm-done-title {
+  color: #059669;
+  text-align: center;
+}
+
+.page-confirm-done .confirm-card {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+}
+
 .confirm-summary {
   background: #f9fafb;
   border-radius: 8px;
