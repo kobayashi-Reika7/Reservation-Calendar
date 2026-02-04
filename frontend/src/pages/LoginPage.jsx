@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TextField } from '../components/InputForm';
+import { backendLogin } from '../services/backend';
 import { login } from '../services/auth';
 
 function LoginPage() {
@@ -23,16 +24,23 @@ function LoginPage() {
     }
     setLoading(true);
     try {
+      // 1. バックエンド DB でメール・パスワードを照合
+      await backendLogin(email.trim(), password);
+      // 2. Firebase Auth でログイン（アプリ内セッション・Firestore 用 uid）
       await login(email.trim(), password);
       navigate('/calendar', { replace: true });
     } catch (err) {
       const code = err?.code ?? '';
-      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+      const status = err?.status;
+      const detail = err?.detail ?? '';
+      if (status === 401 || code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
         setError('メールアドレスかパスワードが違います。');
       } else if (code === 'auth/invalid-email') {
         setError('メールアドレスの形式が正しくありません。');
+      } else if (detail) {
+        setError(typeof detail === 'string' ? detail : 'ログインできませんでした。');
       } else {
-        setError('ログインできませんでした。もう一度お試しください。');
+        setError('ログインできませんでした。バックエンドが起動しているか確認してください。');
       }
     } finally {
       setLoading(false);

@@ -13,13 +13,36 @@
 
 ### セットアップ
 
+**1. バックエンド（新規登録データを DB に格納・ログイン照合）**
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate   # Windows
+# source venv/bin/activate  # Mac/Linux
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+- API: http://localhost:8000
+- エンドポイント: `POST /auth/signup`（新規登録）, `POST /auth/login`（ログイン照合）, `GET /health`
+
+**2. フロントエンド**
+
 ```bash
 cd frontend
 cp .env.example .env
-# .env に Firebase の値を設定（VITE_FIREBASE_*）
+# .env に Firebase（VITE_FIREBASE_*）と必要なら VITE_API_BASE=http://localhost:8000
 npm install
 npm run dev
 ```
 
 - ブラウザは http://localhost:5200 で開く（スマホ表示で確認推奨）
-- Firebase Console で Authentication（メール/パスワードを有効化）と Firestore を用意し、ルールを設定すること
+- 新規登録・ログイン時は **バックエンドを先に起動** すること（DB に格納・照合のため）
+- Firebase Console で **Authentication → サインイン方法 → メール/パスワード** を有効にすること
+- Firestore を有効にし、`users/{uid}/reservations` 用のセキュリティルールを設定すること
+
+### よくあるエラー
+
+- **新規登録で 400 が出る**: Firebase Console で「メール/パスワード」が有効か確認してください。
+- **favicon.ico 404**: 無視して問題ありません（アプリ内で SVG アイコンを指定済み）。

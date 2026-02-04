@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TextField } from '../components/InputForm';
+import { backendSignup } from '../services/backend';
 import { signup } from '../services/auth';
 
 function SignupPage() {
@@ -27,18 +28,25 @@ function SignupPage() {
     }
     setLoading(true);
     try {
+      // 1. バックエンド DB に新規登録データを格納
+      await backendSignup(email.trim(), password);
+      // 2. Firebase Auth に登録（アプリ内ログイン・Firestore 用 uid のため）
       await signup(email.trim(), password);
       navigate('/calendar', { replace: true });
     } catch (err) {
       const code = err?.code ?? '';
-      if (code === 'auth/email-already-in-use') {
+      const status = err?.status;
+      const detail = err?.detail ?? '';
+      if (status === 409 || code === 'auth/email-already-in-use') {
         setError('このメールアドレスは既に登録されています。');
       } else if (code === 'auth/invalid-email') {
         setError('メールアドレスの形式が正しくありません。');
       } else if (code === 'auth/weak-password') {
         setError('パスワードは6文字以上にしてください。');
+      } else if (detail) {
+        setError(typeof detail === 'string' ? detail : '登録できませんでした。');
       } else {
-        setError('登録できませんでした。もう一度お試しください。');
+        setError('登録できませんでした。バックエンドが起動しているか確認してください。');
       }
     } finally {
       setLoading(false);
