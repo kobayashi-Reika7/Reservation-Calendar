@@ -1,0 +1,287 @@
+/**
+ * スマホ利用を前提としたスタイル
+ * 文字サイズは小さくなりすぎないよう 16px 以上を基本とする
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  background: #f5f5f5;
+  -webkit-text-size-adjust: 100%;
+}
+
+.app {
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  background: #fff;
+}
+
+.app-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+/* ========== ページ共通 ========== */
+.page {
+  padding: 0.5rem 0 2rem;
+}
+
+.page-title {
+  font-size: 1.35rem;
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.page-lead {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0 0 1rem;
+}
+
+.page-form {
+  margin-bottom: 1rem;
+}
+
+.page-error {
+  color: #c00;
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem;
+  background: #fff0f0;
+  border-radius: 6px;
+}
+
+.page-muted {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.page-link {
+  margin: 1rem 0 0;
+  font-size: 1rem;
+}
+
+.page-link a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.page-link a:hover {
+  text-decoration: underline;
+}
+
+/* ========== ボタン ========== */
+.btn {
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0.25rem 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+/* ========== フォーム部品（InputForm） ========== */
+.input-form-field {
+  margin-bottom: 1rem;
+}
+
+.input-form-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: #374151;
+}
+
+.input-form-required {
+  color: #c00;
+}
+
+.input-form-input,
+.input-form-select {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.input-form-input:focus,
+.input-form-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.input-form-select:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ========== カレンダー（Calendar） ========== */
+.calendar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.calendar-nav {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-nav:hover {
+  background: #e5e7eb;
+}
+
+.calendar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #374151;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-day-other {
+  color: #9ca3af;
+}
+
+.calendar-day-past {
+  color: #d1d5db;
+}
+
+.calendar-day-selectable {
+  cursor: pointer;
+  background: #f3f4f6;
+}
+
+.calendar-day-selectable:hover {
+  background: #e5e7eb;
+}
+
+.calendar-day-selected {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
+
+.calendar-day-selectable.calendar-day-selected:hover {
+  background: #1d4ed8;
+}
+
+.calendar-day:disabled {
+  cursor: not-allowed;
+}
+
+/* ========== 予約確認・完了 ========== */
+.confirm-summary {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.confirm-summary p {
+  margin: 0.5rem 0;
+}
+
+.confirm-summary strong {
+  display: inline-block;
+  min-width: 5rem;
+  color: #6b7280;
+}
+
+.page-confirm-done .page-title {
+  color: #059669;
+}
