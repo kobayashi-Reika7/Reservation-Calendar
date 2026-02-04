@@ -13,12 +13,11 @@ from models import UserSignup, UserLogin, UserResponse, UserRegisterBody
 import store
 
 # CORS: フロントエンド（Vite 開発サーバー）を許可
+# 環境変数が設定されていても、ローカル開発用の origin は常に許可する（CORS で詰まりやすいため）
+_default_origins = ["http://localhost:5200", "http://127.0.0.1:5200"]
 _origins_env = os.getenv("ALLOWED_ORIGINS", "").strip()
-ALLOWED_ORIGINS = (
-    [o.strip() for o in _origins_env.split(",") if o.strip()]
-    if _origins_env
-    else ["http://localhost:5200", "http://127.0.0.1:5200"]
-)
+_extra_origins = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else []
+ALLOWED_ORIGINS = list(dict.fromkeys([*_default_origins, *_extra_origins]))
 
 app = FastAPI(title="Reservation API", version="1.0")
 
@@ -35,6 +34,12 @@ app.add_middleware(
 def health():
     """ヘルスチェック"""
     return {"status": "ok"}
+
+
+@app.get("/debug/cors")
+def debug_cors():
+    """デバッグ用: CORS 許可オリジン一覧を返す（ローカル確認用）"""
+    return {"allowed_origins": ALLOWED_ORIGINS}
 
 
 # ===== 認証 API =====

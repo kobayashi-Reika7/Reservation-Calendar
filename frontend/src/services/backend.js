@@ -2,7 +2,7 @@
  * バックエンド API 呼び出し
  * 新規登録・ログイン照合をバックエンド DB に対して行う
  */
-const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8001';
 
 /**
  * 新規登録（バックエンド DB にユーザーを格納）

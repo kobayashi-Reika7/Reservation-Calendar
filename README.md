@@ -21,10 +21,10 @@ python -m venv venv
 venv\Scripts\activate   # Windows
 # source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 8001
 ```
 
-- API: http://localhost:8000
+- API: http://localhost:8001
 - エンドポイント: `POST /auth/signup`（新規登録）, `POST /auth/login`（ログイン照合）, `GET /health`
 
 **2. フロントエンド**
@@ -32,7 +32,7 @@ uvicorn main:app --reload --port 8000
 ```bash
 cd frontend
 cp .env.example .env
-# .env に Firebase（VITE_FIREBASE_*）と必要なら VITE_API_BASE=http://localhost:8000
+# .env に Firebase（VITE_FIREBASE_*）と必要なら VITE_API_BASE=http://localhost:8001
 npm install
 npm run dev
 ```
