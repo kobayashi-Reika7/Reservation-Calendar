@@ -1,19 +1,57 @@
 /**
  * カレンダー選択画面（メイン機能）
- * 月表示カレンダーで日付を選択。過去日は選択不可。選択後は ReserveFormPage へ遷移
+ * 月表示カレンダーで日付を選択。予約済みの日も表示する。
  */
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../App';
 import Calendar from '../components/Calendar';
+import { getReservationsByUser } from '../services/reservation';
 
 function CalendarPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = useAuth();
   const [selectedDate, setSelectedDate] = useState(null);
+  const [reservations, setReservations] = useState([]);
+  const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
+
+  const editingState = location.state?.isEditing
+    ? {
+        isEditing: true,
+        editingReservationId: location.state.editingReservationId,
+        editingReservation: location.state.editingReservation,
+      }
+    : null;
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    getReservationsByUser(user.uid).then(setReservations);
+  }, [user?.uid]);
+
+  const reservedDates = useMemo(
+    () => new Set(reservations.map((r) => r.date).filter(Boolean)),
+    [reservations]
+  );
+
+  const monthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
+  const reservationsThisMonth = useMemo(
+    () => reservations.filter((r) => r.date && r.date.startsWith(monthPrefix)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)),
+    [reservations, monthPrefix]
+  );
+
+  const handleMonthChange = (y, m) => {
+    setViewYear(y);
+    setViewMonth(m);
+  };
 
   const handleSelectDate = (date) => {
     setSelectedDate(date);
     const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-    navigate('/reserve/form', { state: { selectedDate: dateStr } });
+    navigate('/reserve/form', {
+      state: { selectedDate: dateStr, ...(editingState || {}) },
+    });
   };
 
   return (
@@ -22,7 +60,38 @@ function CalendarPage() {
       <p className="page-lead calendar-hint">
         選べる日（白い日付）をタップ → 予約内容の入力画面へ進みます。
       </p>
-      <Calendar selectedDate={selectedDate} onSelectDate={handleSelectDate} />
+      <Calendar
+        selectedDate={selectedDate}
+        onSelectDate={handleSelectDate}
+        reservedDates={reservedDates}
+        onMonthChange={handleMonthChange}
+      />
+      <section className="calendar-month-reservations" aria-labelledby="calendar-month-reservations-title">
+        <h2 id="calendar-month-reservations-title" className="calendar-month-reservations-title">
+          {viewYear}年{viewMonth + 1}月の予約
+        </h2>
+        {reservationsThisMonth.length === 0 ? (
+          <p className="calendar-month-reservations-empty">この月の予約はありません。</p>
+        ) : (
+          <ul className="calendar-month-reservations-list">
+            {reservationsThisMonth.map((r) => (
+              <li key={r.id} className="calendar-month-reservation-card">
+                <p className="calendar-reservation-date-time">
+                  <strong>{r.date}</strong> {r.time}
+                </p>
+                <p className="calendar-reservation-dept">{r.department}</p>
+                <p className="calendar-reservation-doctor">{r.doctor ? `担当医: ${r.doctor}` : ''}</p>
+                <p className="calendar-reservation-purpose">{r.purpose ? `目的: ${r.purpose}` : ''}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <div className="page-actions calendar-actions">
+        <button type="button" className="btn btn-secondary" onClick={() => navigate('/menu')}>
+          メニューに戻る
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /**
  * 新規ユーザー登録画面
- * メール・パスワードで登録。成功後はログイン状態になるため CalendarPage へ遷移
+ * メール・パスワードで登録。成功後はログイン状態になるため MenuPage（予約メニュー）へ遷移
  */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';

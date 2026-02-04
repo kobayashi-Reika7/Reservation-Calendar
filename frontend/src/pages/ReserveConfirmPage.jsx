@@ -1,12 +1,12 @@
 /**
  * 予約確認画面
  * 「この内容で予約しますか？」が一目で分かるカード表示。
- * 修正する / 予約を確定する を明確に分け、保存中はローディング表示。
+ * 変更時は元の予約を削除してから新規作成する（安全設計）。
  */
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
-import { createReservation } from '../services/reservation';
+import { createReservation, deleteReservation, isSlotTakenForDoctor } from '../services/reservation';
 
 function ReserveConfirmPage() {
   const navigate = useNavigate();
@@ -20,6 +20,8 @@ function ReserveConfirmPage() {
     purpose,
     doctor,
     time,
+    isEditing,
+    editingReservationId,
   } = state;
 
   const [loading, setLoading] = useState(false);
@@ -34,6 +36,25 @@ function ReserveConfirmPage() {
     setError('');
     setLoading(true);
     try {
+      const doctorVal = doctor ?? '';
+      if (doctorVal.trim()) {
+        const taken = await isSlotTakenForDoctor(
+          selectedDate,
+          time,
+          department ?? '',
+          doctorVal,
+          isEditing ? user.uid : undefined,
+          isEditing ? editingReservationId : undefined
+        );
+        if (taken) {
+          setError('この時間は同じ診療科・同じ担当医で既に別の方が予約済みです。別の時間か担当医をお選びください。');
+          setLoading(false);
+          return;
+        }
+      }
+      if (isEditing && editingReservationId) {
+        await deleteReservation(user.uid, editingReservationId);
+      }
       await createReservation(user.uid, {
         date: selectedDate,
         time,
@@ -64,16 +85,22 @@ function ReserveConfirmPage() {
   if (done) {
     return (
       <div className="page page-confirm-done">
-        <h1 className="page-title confirm-done-title">予約が完了しました</h1>
+        <h1 className="page-title confirm-done-title">
+          {isEditing ? '変更が完了しました' : '予約が完了しました'}
+        </h1>
         <div className="confirm-card">
           <p><span className="confirm-label">日付</span> {selectedDate}</p>
           <p><span className="confirm-label">時間</span> {time}</p>
           <p><span className="confirm-label">診療科</span> {department}</p>
           <p><span className="confirm-label">目的</span> {purpose}</p>
-          <p><span className="confirm-label">担当医</span> {doctor}</p>
+          <p><span className="confirm-label">担当医</span> {doctor || '（未選択）'}</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar')}>
-          カレンダーに戻る
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => navigate(isEditing ? '/reservations' : '/calendar')}
+        >
+          {isEditing ? '予約一覧へ' : 'カレンダーに戻る'}
         </button>
       </div>
     );
@@ -89,7 +116,7 @@ function ReserveConfirmPage() {
         <p><span className="confirm-label">大分類</span> {category}</p>
         <p><span className="confirm-label">診療科</span> {department}</p>
         <p><span className="confirm-label">目的</span> {purpose}</p>
-        <p><span className="confirm-label">担当医</span> {doctor}</p>
+        <p><span className="confirm-label">担当医</span> {doctor || '（未選択）'}</p>
       </div>
 
       {error && <p className="page-error" role="alert">{error}</p>}

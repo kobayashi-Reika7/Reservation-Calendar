@@ -212,6 +212,19 @@ body {
   background: #d1d5db;
 }
 
+.btn-text {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.95rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-text:hover {
+  color: #374151;
+}
+
 /* ========== フォーム部品（InputForm） ========== */
 .input-form-field {
   margin-bottom: 1rem;
@@ -304,6 +317,12 @@ body {
   color: #6b7280;
   font-weight: 600;
 }
+.calendar-weekday-sun {
+  color: #dc2626;
+}
+.calendar-weekday-sat {
+  color: #2563eb;
+}
 
 .calendar-grid {
   display: grid;
@@ -331,6 +350,24 @@ body {
 
 .calendar-day-past {
   color: #d1d5db;
+}
+.calendar-day-sunday:not(.calendar-day-selected):not(.calendar-day-other) {
+  color: #dc2626;
+}
+.calendar-day-sunday.calendar-day-past {
+  color: #fca5a5;
+}
+.calendar-day-saturday:not(.calendar-day-selected):not(.calendar-day-other) {
+  color: #2563eb;
+}
+.calendar-day-saturday.calendar-day-past {
+  color: #93c5fd;
+}
+.calendar-day-holiday:not(.calendar-day-selected):not(.calendar-day-other) {
+  color: #dc2626;
+}
+.calendar-day-holiday.calendar-day-past {
+  color: #fca5a5;
 }
 
 .calendar-day-selectable {
@@ -376,9 +413,341 @@ body {
   color: rgba(255, 255, 255, 0.9);
 }
 
+.calendar-day-reserved .calendar-day-reserved-badge {
+  display: block;
+  font-size: 0.55rem;
+  margin-top: 1px;
+  color: #059669;
+  font-weight: 600;
+}
+.calendar-day-reserved:not(.calendar-day-selected) .calendar-day-reserved-badge {
+  color: #059669;
+}
+.calendar-day-selected .calendar-day-reserved-badge {
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .calendar-hint {
   font-size: 1rem;
   margin-bottom: 1.25rem;
+}
+.calendar-actions {
+  margin-top: 1.5rem;
+}
+
+.calendar-month-reservations {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+.calendar-month-reservations-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #374151;
+}
+.calendar-month-reservations-empty {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+.calendar-month-reservations-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.calendar-month-reservation-card {
+  padding: 0.875rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin: 0;
+}
+.calendar-month-reservation-card .calendar-reservation-date-time {
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+}
+.calendar-month-reservation-card .calendar-reservation-date-time strong {
+  color: #1f2937;
+}
+.calendar-month-reservation-card .calendar-reservation-dept {
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.15rem 0;
+  font-size: 0.95rem;
+}
+.calendar-month-reservation-card .calendar-reservation-doctor,
+.calendar-month-reservation-card .calendar-reservation-purpose {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ========== 予約メニュー画面（ログイン後トップ） ========== */
+.page-menu {
+  padding-top: 1.5rem;
+}
+.menu-title {
+  font-size: 1.35rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 72px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-btn-icon {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+.menu-btn-text {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.menu-btn-sub {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 0.15rem;
+}
+.menu-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+.menu-btn-primary:hover {
+  background: #1d4ed8;
+}
+.menu-btn-secondary {
+  background: #fff;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+.menu-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.menu-logout {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+/* ========== 予約一覧画面（予約確認） ========== */
+.reservations-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.reservations-back {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: #2563eb;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.reservations-back:hover {
+  background: #eff6ff;
+}
+.reservations-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+}
+.reservations-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  font-size: 1rem;
+  color: #6b7280;
+}
+.reservations-loading-spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: reservations-spin 0.8s linear infinite;
+}
+@keyframes reservations-spin {
+  to { transform: rotate(360deg); }
+}
+.reservations-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.reservation-card {
+  padding: 1.25rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.reservation-card p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.reservation-card-datetime {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+.reservation-card-datetime-icon {
+  margin-right: 0.35rem;
+}
+.reservation-card-meta {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+.reservation-card-doctor {
+  font-size: 1rem;
+  color: #6b7280;
+}
+.reservation-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+.reservation-btn-change {
+  flex: 1;
+  min-width: 120px;
+}
+.reservation-btn-cancel {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+}
+.reservation-btn-cancel:hover:not(:disabled) {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #9ca3af;
+}
+.reservation-btn-cancel:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.reservations-success {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #059669;
+  background: #ecfdf5;
+  border-radius: 8px;
+}
+.reservation-cancel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.reservation-cancel-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+.reservation-cancel-dialog-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111827;
+}
+.reservation-cancel-dialog-message {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+}
+.reservation-cancel-dialog-summary {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+  padding: 0.5rem 0;
+}
+.reservation-cancel-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.reservation-btn-cancel-confirm {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  font-size: 1rem;
+}
+.reservation-btn-cancel-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.reservation-btn-cancel-confirm:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.reservations-empty {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin: 1rem 0;
+}
+.reservations-empty-text {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+  color: #6b7280;
+}
+.reservations-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
 }
 
 /* ========== 予約入力フォーム（段階表示・選択状態可視） ========== */
@@ -444,6 +813,35 @@ body {
 .choice-btn-full {
   width: 100%;
   text-align: left;
+}
+
+.choice-btn-disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.form-step-optional {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 0.5rem;
+}
+.form-step-time-hint {
+  margin-bottom: 0.75rem;
+}
+.form-step-loading {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 0.75rem;
+}
+.form-step-empty {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
 }
 
 .choice-list {

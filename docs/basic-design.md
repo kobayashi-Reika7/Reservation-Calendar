@@ -31,13 +31,14 @@ frontend/src/
 
 ## 画面遷移
 
-- `/login` → ログイン成功 → `/calendar`
-- `/signup` → 登録成功 → `/calendar`
-- `/calendar` → 日付選択 → `/reserve/form`（state で日付を渡す）
+- `/login` → ログイン成功 → `/menu`（予約メニュー）
+- `/signup` → 登録成功 → `/menu`
+- `/menu` → 「予約する」→ `/calendar` → 日付選択 → `/reserve/form`（state で日付を渡す）
 - `/reserve/form` → 入力完了 → `/reserve/confirm`（state で入力内容を渡す）
 - `/reserve/confirm` → 確定 → Firestore 保存 → 完了表示
+- `/menu` → 「予約を確認する」→ `/reservations`（MyReservationsPage）
 
-未ログインで `/calendar` または `/reserve/*` にアクセスした場合は `/login` へリダイレクト。
+未ログインで `/menu`・`/calendar`・`/reserve/*`・`/reservations` にアクセスした場合は `/login` へリダイレクト。
 
 ## データ設計（Firestore）
 

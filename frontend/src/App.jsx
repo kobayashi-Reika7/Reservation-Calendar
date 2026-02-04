@@ -7,9 +7,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { subscribeAuth } from './services/auth';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import MenuPage from './pages/MenuPage';
 import CalendarPage from './pages/CalendarPage';
 import ReserveFormPage from './pages/ReserveFormPage';
 import ReserveConfirmPage from './pages/ReserveConfirmPage';
+import MyReservationsPage from './pages/MyReservationsPage';
 
 const AuthContext = createContext(null);
 
@@ -39,6 +41,14 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route
+        path="/menu"
+        element={
+          <ProtectedRoute>
+            <MenuPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/calendar"
         element={
           <ProtectedRoute>
@@ -62,8 +72,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/calendar" replace />} />
-      <Route path="*" element={<Navigate to="/calendar" replace />} />
+      <Route
+        path="/reservations"
+        element={
+          <ProtectedRoute>
+            <MyReservationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/menu" replace />} />
+      <Route path="*" element={<Navigate to="/menu" replace />} />
     </Routes>
   );
 }

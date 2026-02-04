@@ -1,6 +1,6 @@
 /**
  * ログイン画面
- * メール・パスワードでログイン。成功後は CalendarPage へ遷移
+ * メール・パスワードでログイン。成功後は MenuPage（予約メニュー）へ遷移
  */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -33,7 +33,7 @@ function LoginPage() {
       } catch {
         // バックエンド未起動/管理者SDK未設定でも、ログインは継続する
       }
-      navigate('/calendar', { replace: true });
+      navigate('/menu', { replace: true });
     } catch (err) {
       const code = err?.code ?? '';
       if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
