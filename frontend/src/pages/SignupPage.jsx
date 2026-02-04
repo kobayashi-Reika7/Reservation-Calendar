@@ -46,35 +46,42 @@ function SignupPage() {
   };
 
   return (
-    <div className="page page-signup">
-      <h1 className="page-title">新規登録</h1>
-      <form onSubmit={handleSubmit} className="page-form">
-        {error && <p className="page-error" role="alert">{error}</p>}
-        <TextField
-          label="メールアドレス"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          placeholder="example@email.com"
-          autoComplete="email"
-          required
-        />
-        <TextField
-          label="パスワード"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          placeholder="6文字以上"
-          autoComplete="new-password"
-          required
-        />
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? '登録中…' : '登録'}
-        </button>
-      </form>
-      <p className="page-link">
-        <Link to="/login">ログインはこちら</Link>
-      </p>
+    <div className="page page-signup auth-page">
+      <div className="auth-header">
+        <h1 className="auth-app-title">診療予約</h1>
+        <p className="auth-app-lead">日付を選んで、かんたん予約</p>
+      </div>
+      <div className="auth-card">
+        <h2 className="auth-card-title">新規登録</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
+          {error && <p className="page-error auth-error" role="alert">{error}</p>}
+          <TextField
+            label="メールアドレス"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            placeholder="example@email.com"
+            autoComplete="email"
+            required
+          />
+          <TextField
+            label="パスワード"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder="6文字以上"
+            autoComplete="new-password"
+            required
+          />
+          <p className="auth-hint">パスワードは6文字以上で設定してください。</p>
+          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+            {loading ? '登録中…' : '登録する'}
+          </button>
+        </form>
+        <p className="auth-switch">
+          すでにアカウントをお持ちの方は <Link to="/login">ログイン</Link>
+        </p>
+      </div>
     </div>
   );
 }

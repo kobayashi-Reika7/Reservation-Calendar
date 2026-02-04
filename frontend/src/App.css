@@ -81,6 +81,99 @@ body {
   text-decoration: underline;
 }
 
+/* ========== ログイン・新規登録 UI（auth-page） ========== */
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-app-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.02em;
+}
+
+.auth-app-lead {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.auth-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+
+.auth-form {
+  margin-bottom: 1rem;
+}
+
+.auth-form .input-form-field {
+  margin-bottom: 1.25rem;
+}
+
+.auth-error {
+  margin-bottom: 1rem;
+}
+
+.auth-hint {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: -0.5rem 0 1rem;
+}
+
+.auth-submit {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  padding: 1rem;
+  font-size: 1.05rem;
+  border-radius: 10px;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 1.25rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.auth-switch a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
 /* ========== ボタン ========== */
 .btn {
   display: inline-block;

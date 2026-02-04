@@ -40,35 +40,41 @@ function LoginPage() {
   };
 
   return (
-    <div className="page page-login">
-      <h1 className="page-title">ログイン</h1>
-      <form onSubmit={handleSubmit} className="page-form">
-        {error && <p className="page-error" role="alert">{error}</p>}
-        <TextField
-          label="メールアドレス"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          placeholder="example@email.com"
-          autoComplete="email"
-          required
-        />
-        <TextField
-          label="パスワード"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          placeholder="パスワード"
-          autoComplete="current-password"
-          required
-        />
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'ログイン中…' : 'ログイン'}
-        </button>
-      </form>
-      <p className="page-link">
-        <Link to="/signup">新規登録はこちら</Link>
-      </p>
+    <div className="page page-login auth-page">
+      <div className="auth-header">
+        <h1 className="auth-app-title">診療予約</h1>
+        <p className="auth-app-lead">日付を選んで、かんたん予約</p>
+      </div>
+      <div className="auth-card">
+        <h2 className="auth-card-title">ログイン</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
+          {error && <p className="page-error auth-error" role="alert">{error}</p>}
+          <TextField
+            label="メールアドレス"
+            type="email"
+            value={email}
+            onChange={setEmail}
+            placeholder="example@email.com"
+            autoComplete="email"
+            required
+          />
+          <TextField
+            label="パスワード"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder="パスワード"
+            autoComplete="current-password"
+            required
+          />
+          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+            {loading ? 'ログイン中…' : 'ログイン'}
+          </button>
+        </form>
+        <p className="auth-switch">
+          アカウントをお持ちでない方は <Link to="/signup">新規登録</Link>
+        </p>
+      </div>
     </div>
   );
 }
