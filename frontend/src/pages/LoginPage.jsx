@@ -4,6 +4,8 @@
  */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Breadcrumb from '../components/Breadcrumb';
+import ReservationStepHeader from '../components/ReservationStepHeader';
 import { TextField } from '../components/InputForm';
 import { syncMe } from '../services/backend';
 import { login } from '../services/auth';
@@ -50,6 +52,14 @@ function LoginPage() {
 
   return (
     <div className="page page-login auth-page">
+      <ReservationStepHeader currentStep={2} title="新規会員登録 / ログイン" />
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: 'ログイン' },
+        ]}
+      />
+      <span className="page-hero-icon" aria-hidden>🏥</span>
       <div className="auth-header">
         <h1 className="auth-app-title">診療予約</h1>
         <p className="auth-app-lead">日付を選んで、かんたん予約</p>
@@ -76,13 +86,13 @@ function LoginPage() {
             autoComplete="current-password"
             required
           />
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? 'ログイン中…' : 'ログイン'}
-          </button>
+          <div className="auth-submit-wrap">
+            <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+              {loading ? 'ログイン中…' : 'ログイン'}
+            </button>
+          </div>
         </form>
-        <p className="auth-switch">
-          アカウントをお持ちでない方は <Link to="/signup">新規登録</Link>
-        </p>
+        <p className="auth-switch">アカウントをお持ちでない方は<p></p><Link to="/signup">新規登録</Link></p>
       </div>
     </div>
   );

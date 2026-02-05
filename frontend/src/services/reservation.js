@@ -100,6 +100,32 @@ export async function deleteReservation(uid, reservationId) {
 }
 
 /**
+ * 指定した担当医（診療科+表示名）の指定日の予約済み時間を取得（他ユーザー含む）
+ * collectionGroup で「同じ科・同じ担当医」の予約を集約し、その日の time を返す。
+ * @param {string} departmentLabel - 診療科の表示名
+ * @param {string} doctorName - 担当医の表示名
+ * @param {string} date - YYYY-MM-DD
+ * @returns {Promise<Set<string>>} 予約済みの時間の集合（例: Set(["09:00", "10:30"]））
+ */
+export async function getReservedTimesForDoctorAndDate(departmentLabel, doctorName, date) {
+  const out = new Set();
+  if (!departmentLabel?.trim() || !doctorName?.trim() || !date) return out;
+  const ref = collectionGroup(db, 'reservations');
+  const q = query(
+    ref,
+    where('date', '==', date),
+    where('department', '==', departmentLabel.trim()),
+    where('doctor', '==', doctorName.trim())
+  );
+  const snap = await getDocs(q);
+  snap.docs.forEach((d) => {
+    const t = d.data().time;
+    if (typeof t === 'string' && t.trim()) out.add(t.trim());
+  });
+  return out;
+}
+
+/**
  * ユーザーの予約一覧を取得（日付・時間昇順）
  * @param {string} uid
  * @returns {Promise<Array<{id, date, time, category, department, purpose, doctor}>>}

@@ -1,8 +1,12 @@
 /**
  * バックエンド API 呼び出し
- * 認証は Firebase に一本化し、バックエンドには「ログイン済みユーザー情報」を同期する
+ * 認証は Firebase に一本化。空き枠・予約作成はバックエンドが判定（フロントは表示のみ）。
  */
 const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8001';
+
+function authHeaders(idToken) {
+  return idToken ? { Authorization: `Bearer ${idToken}` } : {};
+}
 
 /**
  * Firebase IDトークンを使って /users/me を呼び、バックエンドへユーザー情報を同期する
@@ -17,6 +21,88 @@ export async function syncMe(idToken) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.detail ?? 'ユーザー同期に失敗しました。');
+    err.status = res.status;
+    err.detail = data.detail;
+    throw err;
+  }
+  return data;
+}
+
+/**
+ * デモ用スロット生成（API 失敗時のフォールバック）。平日 09:00〜11:45 を予約可とする。
+ * @param {string} dateStr - YYYY-MM-DD
+ * @param {string[]} timeSlots - 時間枠リスト（getTimeSlots() と同形式）
+ * @returns {Array<{ time: string, reservable: boolean }>}
+ */
+export function getDemoSlotsForDate(dateStr, timeSlots) {
+  if (!dateStr || !Array.isArray(timeSlots)) return timeSlots.map((t) => ({ time: t, reservable: false }));
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, (m || 1) - 1, d || 1);
+  const dow = date.getDay(); // 0=Sun .. 6=Sat
+  const isWeekday = dow >= 1 && dow <= 5;
+  return timeSlots.map((t) => ({
+    time: t,
+    reservable: isWeekday && t >= '09:00' && t < '12:00',
+  }));
+}
+
+/**
+ * 診療科・日付の空き枠を取得。○×の計算はバックエンドのみ。フロントは表示だけ。
+ * 失敗時はデモスロットでフォールバックし、空き状況の表示を確実にする。
+ * @param {string} department - 診療科表示名（例: "循環器内科"）
+ * @param {string} date - YYYY-MM-DD
+ * @param {string} [idToken] - 任意（スロット取得は認証なしでも可）
+ * @returns {Promise<{ slots: Array<{ time: string, reservable: boolean }>, isDemoFallback?: boolean }>}
+ */
+function messageForStatus(status, defaultMessage) {
+  if (status === 404) {
+    return 'API が見つかりません (404)。Day5/backend で run.bat を実行し、http://localhost:8001 でバックエンドを起動してください。';
+  }
+  if (status === 502 || status === 503) return 'バックエンドに接続できません。しばらくしてから再試行してください。';
+  return defaultMessage;
+}
+
+export async function getSlots(department, date, idToken) {
+  const params = new URLSearchParams({ department: department || '', date: date || '' });
+  try {
+    const res = await fetch(`${getBaseUrl()}/api/slots?${params}`, {
+      method: 'GET',
+      headers: authHeaders(idToken),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.detail ?? messageForStatus(res.status, '空き枠の取得に失敗しました。'));
+    }
+    const slots = Array.isArray(data) ? data : [];
+    return { slots, isDemoFallback: false };
+  } catch (err) {
+    const { getTimeSlots } = await import('../constants/masterData');
+    const timeSlots = getTimeSlots();
+    const slots = getDemoSlotsForDate(date, timeSlots);
+    return { slots, isDemoFallback: true };
+  }
+}
+
+/**
+ * 予約を確定する。担当医はバックエンドで自動割当。認証必須。
+ * @param {string} idToken
+ * @param {object} body - { department, date, time }
+ * @returns {Promise<{ id: string, date: string, time: string, department: string }>}
+ */
+export async function createReservationApi(idToken, body) {
+  const res = await fetch(`${getBaseUrl()}/api/reservations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(idToken) },
+    body: JSON.stringify({
+      department: body.department ?? '',
+      date: body.date ?? '',
+      time: body.time ?? '',
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data.detail ?? messageForStatus(res.status, '予約の保存に失敗しました。');
+    const err = new Error(msg);
     err.status = res.status;
     err.detail = data.detail;
     throw err;

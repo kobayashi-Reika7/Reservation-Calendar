@@ -5,11 +5,12 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { subscribeAuth } from './services/auth';
+import TopPage from './pages/TopPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import MenuPage from './pages/MenuPage';
 import CalendarPage from './pages/CalendarPage';
-import ReserveFormPage from './pages/ReserveFormPage';
+import ReservationFormPage from './pages/ReservationFormPage';
 import ReserveConfirmPage from './pages/ReserveConfirmPage';
 import MyReservationsPage from './pages/MyReservationsPage';
 
@@ -60,7 +61,7 @@ function AppRoutes() {
         path="/reserve/form"
         element={
           <ProtectedRoute>
-            <ReserveFormPage />
+            <ReservationFormPage />
           </ProtectedRoute>
         }
       />
@@ -80,8 +81,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/menu" replace />} />
-      <Route path="*" element={<Navigate to="/menu" replace />} />
+      <Route path="/" element={<TopPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -4,7 +4,10 @@
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../components/Breadcrumb';
 import { logout } from '../services/auth';
+
+const HOSPITAL_NAME = 'さくら総合病院';
 
 function MenuPage() {
   const navigate = useNavigate();
@@ -20,12 +23,26 @@ function MenuPage() {
 
   return (
     <div className="page page-menu">
-      <h1 className="page-title menu-title">ご用件を選択してください</h1>
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: '診察予約' },
+        ]}
+      />
+
+      <header className="menu-header">
+        <span className="page-hero-icon" aria-hidden>🏥</span>
+        <h1 className="page-title menu-title">{HOSPITAL_NAME}｜診察予約</h1>
+        <p className="menu-lead">
+          新規予約・予約確認ができます。
+        </p>
+      </header>
+
       <div className="menu-buttons">
         <button
           type="button"
           className="menu-btn menu-btn-primary"
-          onClick={() => navigate('/calendar')}
+          onClick={() => navigate('/reserve/form')}
         >
           <span className="menu-btn-icon" aria-hidden>1️⃣</span>
           <span className="menu-btn-text">予約する</span>

@@ -40,14 +40,12 @@ export const DEPARTMENTS_BY_CATEGORY = {
   ],
 };
 
-// 予約目的（初診 / 再診 / 検査 / 処置 / 相談 / 健診）
+// 予約目的（代表4種。その他は「その他」に集約）
 export const PURPOSES = [
   { id: 'first', label: '初診' },
   { id: 'follow', label: '再診' },
-  { id: 'exam', label: '検査' },
-  { id: 'procedure', label: '処置' },
-  { id: 'consultation', label: '相談' },
-  { id: 'health_check', label: '健診' },
+  { id: 'vaccine', label: '予防接種' },
+  { id: 'other', label: 'その他' },
 ];
 
 // 担当医（サンプル。医師ごとの勤務は簡略化し、時間枠は共通で表示）
@@ -58,14 +56,17 @@ export const DOCTORS = [
 ];
 
 /**
- * 30分刻みの予約可能時間枠（9:00〜17:00）
- * @returns {string[]} 例 ["09:00", "09:30", ...]
+ * 15分刻みの予約可能時間枠（9:00〜17:00）
+ * - 開始 09:00
+ * - 最終枠 16:45（17:00 終了を想定）
+ * @returns {string[]} 例 ["09:00", "09:15", ...]
  */
 export function getTimeSlots() {
   const slots = [];
   for (let h = 9; h < 17; h++) {
-    slots.push(`${String(h).padStart(2, '0')}:00`);
-    slots.push(`${String(h).padStart(2, '0')}:30`);
+    for (const m of [0, 15, 30, 45]) {
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
   }
   return slots;
 }

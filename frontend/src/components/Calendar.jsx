@@ -52,11 +52,12 @@ function getCalendarDays(year, month) {
     const isCurrentMonth = d.getMonth() === month;
     const isPast = d < today;
     const isToday = d.getTime() === today.getTime();
-    const isSelectable = isCurrentMonth && !isPast;
     const dayOfWeek = d.getDay();
     const isSunday = dayOfWeek === 0;
     const isSaturday = dayOfWeek === 6;
     const isHoliday = isJapaneseHoliday(d);
+    // TopPage の「日曜・祝日は休診」と整合させ、日祝は選択不可にする
+    const isSelectable = isCurrentMonth && !isPast && !isSunday && !isHoliday;
     days.push({
       date: d,
       label: d.getDate(),

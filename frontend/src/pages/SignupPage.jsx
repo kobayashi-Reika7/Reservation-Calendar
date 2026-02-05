@@ -4,6 +4,8 @@
  */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Breadcrumb from '../components/Breadcrumb';
+import ReservationStepHeader from '../components/ReservationStepHeader';
 import { TextField } from '../components/InputForm';
 import { syncMe } from '../services/backend';
 import { signup } from '../services/auth';
@@ -37,7 +39,7 @@ function SignupPage() {
       } catch {
         // バックエンド未起動/管理者SDK未設定でも、ログインは継続する
       }
-      navigate('/calendar', { replace: true });
+      navigate('/reserve/form', { replace: true });
     } catch (err) {
       const code = err?.code ?? '';
       if (code === 'auth/email-already-in-use') {
@@ -56,6 +58,14 @@ function SignupPage() {
 
   return (
     <div className="page page-signup auth-page">
+      <ReservationStepHeader currentStep={2} title="新規会員登録 / ログイン" />
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: '新規登録' },
+        ]}
+      />
+      <span className="page-hero-icon" aria-hidden>🏥</span>
       <div className="auth-header">
         <h1 className="auth-app-title">診療予約</h1>
         <p className="auth-app-lead">日付を選んで、かんたん予約</p>
@@ -83,13 +93,13 @@ function SignupPage() {
             required
           />
           <p className="auth-hint">パスワードは6文字以上で設定してください。</p>
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-            {loading ? '登録中…' : '登録する'}
-          </button>
+          <div className="auth-submit-wrap">
+            <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+              {loading ? '登録中…' : '登録する'}
+            </button>
+          </div>
         </form>
-        <p className="auth-switch">
-          すでにアカウントをお持ちの方は <Link to="/login">ログイン</Link>
-        </p>
+        <p className="auth-switch">すでにアカウントをお持ちの方は <Link to="/login">ログイン</Link></p>
       </div>
     </div>
   );
