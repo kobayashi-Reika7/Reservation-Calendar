@@ -135,12 +135,7 @@ function ReserveFormPage() {
         },
       });
     } catch (err) {
-      const msg = err?.message ?? '';
-      if (msg.includes('index') || msg.includes('Index')) {
-        setSubmitError('予約の重複チェックでエラーが出ています。Firestore の複合インデックス（date, time, department, doctor）を作成するか、担当医を「選択しない」にすると確認画面へ進めます。');
-      } else {
-        setSubmitError(msg || '通信エラーです。しばらくしてからもう一度お試しください。');
-      }
+      setSubmitError('一時的にエラーが発生しました。しばらくしてからもう一度お試しください。');
     }
   };
 
