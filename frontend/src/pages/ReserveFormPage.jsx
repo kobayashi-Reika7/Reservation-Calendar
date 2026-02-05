@@ -107,32 +107,41 @@ function ReserveFormPage() {
     e.preventDefault();
     if (!selectedDate || !category || !department || !purpose || !time) return;
     setSubmitError('');
-    if (doctorLabel && doctorLabel.trim()) {
-      const taken = await isSlotTakenForDoctor(
-        selectedDate,
-        time,
-        departmentLabel,
-        doctorLabel,
-        isEditing ? user?.uid : undefined,
-        isEditing ? editingReservationId : undefined
-      );
-      if (taken) {
-        setSubmitError('この時間は同じ診療科・同じ担当医で既に別の方が予約済みです。別の時間か担当医をお選びください。');
-        return;
+    try {
+      if (doctorLabel && doctorLabel.trim()) {
+        const taken = await isSlotTakenForDoctor(
+          selectedDate,
+          time,
+          departmentLabel,
+          doctorLabel,
+          isEditing ? user?.uid : undefined,
+          isEditing ? editingReservationId : undefined
+        );
+        if (taken) {
+          setSubmitError('この時間は同じ診療科・同じ担当医で既に別の方が予約済みです。別の時間か担当医をお選びください。');
+          return;
+        }
+      }
+      navigate('/reserve/confirm', {
+        state: {
+          selectedDate,
+          category: categoryLabel,
+          department: departmentLabel,
+          purpose: purposeLabel,
+          doctor: doctorLabel || '',
+          time,
+          isEditing: isEditing || undefined,
+          editingReservationId: editingReservationId || undefined,
+        },
+      });
+    } catch (err) {
+      const msg = err?.message ?? '';
+      if (msg.includes('index') || msg.includes('Index')) {
+        setSubmitError('予約の重複チェックでエラーが出ています。Firestore の複合インデックス（date, time, department, doctor）を作成するか、担当医を「選択しない」にすると確認画面へ進めます。');
+      } else {
+        setSubmitError(msg || '通信エラーです。しばらくしてからもう一度お試しください。');
       }
     }
-    navigate('/reserve/confirm', {
-      state: {
-        selectedDate,
-        category: categoryLabel,
-        department: departmentLabel,
-        purpose: purposeLabel,
-        doctor: doctorLabel || '',
-        time,
-        isEditing: isEditing || undefined,
-        editingReservationId: editingReservationId || undefined,
-      },
-    });
   };
 
   if (!selectedDate) {
