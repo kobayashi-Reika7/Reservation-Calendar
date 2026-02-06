@@ -58,13 +58,13 @@ function SignupPage() {
 
   return (
     <div className="page page-signup auth-page">
-      <ReservationStepHeader currentStep={2} title="新規会員登録 / ログイン" />
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
           { label: '新規登録' },
         ]}
       />
+      <ReservationStepHeader currentStep={2} />
       <span className="page-hero-icon" aria-hidden>🏥</span>
       <div className="auth-header">
         <h1 className="auth-app-title">診療予約</h1>

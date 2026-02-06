@@ -38,13 +38,17 @@ function TopPage() {
 
   const HOURS = [
     { label: 'Web予約枠', time: WEB_HOURS },
-    { label: '休診日', time: '日曜・祝日' },
+    { label: '休診日', time: '土日祝' },
     { label: '備考', time: '診療科・担当医の勤務状況により、表示される枠が異なります。' },
   ];
 
   const handleReserve = () => {
-    // 「Web予約はこちら」→ /reserve/form（未ログインなら ProtectedRoute が /login へ誘導）
-    navigate('/reserve/form', { replace: true });
+    // 「Web予約はこちら」→ 未ログインはログイン画面へ、ログイン済みはメニューへ
+    if (user) {
+      navigate('/menu', { replace: true });
+    } else {
+      navigate('/login', { replace: true });
+    }
   };
 
   const departmentsList = CATEGORIES.flatMap((c) =>

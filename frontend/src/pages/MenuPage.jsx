@@ -26,7 +26,7 @@ function MenuPage() {
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
-          { label: '診察予約' },
+          { label: 'メニュー' },
         ]}
       />
 

@@ -27,6 +27,15 @@ class SlotItem(BaseModel):
     reservable: bool
 
 
+class AvailabilityForDateResponse(BaseModel):
+    """1日分の空き状況（祝日・過去日・理由をバックエンドで判定、フロントは表示のみ）"""
+    date: str
+    is_holiday: bool
+    reservable: bool
+    reason: Optional[str] = None  # "holiday" | "past" | "closed" | null
+    slots: list[SlotItem]
+
+
 class CreateReservationBody(BaseModel):
     """予約作成（診療科・日・時間のみ。担当医はバックエンドで自動割当）"""
     department: str

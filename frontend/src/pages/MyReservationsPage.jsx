@@ -84,14 +84,14 @@ function MyReservationsPage() {
 
   return (
     <div className="page page-reservations">
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: 'メニュー', to: '/menu' },
+          { label: '予約一覧' },
+        ]}
+      />
       <header className="reservations-header">
-        <Breadcrumb
-          items={[
-            { label: 'Top', to: '/' },
-            { label: '診察予約', to: '/menu' },
-            { label: '予約一覧' },
-          ]}
-        />
         <h1 className="reservations-title">予約一覧</h1>
       </header>
 

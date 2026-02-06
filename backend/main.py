@@ -10,10 +10,10 @@ import os
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import UserResponse, SyncUserBody, SlotItem, CreateReservationBody, ReservationCreated
+from models import UserResponse, SyncUserBody, SlotItem, AvailabilityForDateResponse, CreateReservationBody, ReservationCreated
 import store
 from firebase_admin_client import verify_id_token
-from reservation_service import get_slots, create_reservation as create_reservation_service
+from reservation_service import get_availability_for_date, create_reservation as create_reservation_service
 
 # CORS: フロントエンド（Vite 開発サーバー）を許可
 # 環境変数が設定されていても、ローカル開発用の origin は常に許可する（CORS で詰まりやすいため）
@@ -109,16 +109,16 @@ def api_info():
     }
 
 
-@app.get("/api/slots", response_model=list[SlotItem])
+@app.get("/api/slots", response_model=AvailabilityForDateResponse)
 def api_slots(department: str = "", date: str = "", authorization: str | None = Header(default=None)):
     """
-    診療科・日付の空き枠一覧を返す。フロントは { time, reservable } のみ表示する。
-    ○×の計算は行わない。診療科・日付未指定時は全枠を reservable: false で返す。
+    診療科・日付の空き枠を返す。祝日・過去日はバックエンドで判定し date, is_holiday, reason を含める。
+    フロントは祝日判定を行わず、このレスポンスのみで表示する。
     """
     department = (department or "").strip()
     date = (date or "").strip()
     try:
-        return get_slots(department, date)
+        return get_availability_for_date(department, date)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

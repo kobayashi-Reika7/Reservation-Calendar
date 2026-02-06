@@ -35,6 +35,15 @@ function ReserveConfirmPage() {
       setError('予約情報が不足しています。');
       return;
     }
+    const payload = {
+      department: department ?? '',
+      date: selectedDate,
+      time,
+    };
+    // 調査用: 確定時のペイロード（本番では削除可）
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('confirm payload', payload);
+    }
     setError('');
     setLoading(true);
     try {
@@ -42,14 +51,10 @@ function ReserveConfirmPage() {
         await deleteReservation(user.uid, editingReservationId);
       }
       const idToken = await user.getIdToken();
-      await createReservationApi(idToken, {
-        department: department ?? '',
-        date: selectedDate,
-        time,
-      });
+      await createReservationApi(idToken, payload);
       setDone(true);
     } catch (err) {
-      setError(err?.message ?? '予約の保存に失敗しました。もう一度お試しください。');
+      setError(err?.message ?? '予約を確定できませんでした。もう一度お試しください。');
     } finally {
       setLoading(false);
     }
@@ -58,11 +63,11 @@ function ReserveConfirmPage() {
   if (!selectedDate || !time) {
     return (
       <div className="page">
-        <ReservationStepHeader currentStep={3} title="予約内容確認" />
+        <ReservationStepHeader currentStep={3} />
         <Breadcrumb
           items={[
             { label: 'Top', to: '/' },
-            { label: '診察予約', to: '/menu' },
+            { label: 'メニュー', to: '/menu' },
             { label: '診察予約', to: '/reserve/form' },
             { label: '予約確認' },
           ]}
@@ -80,15 +85,15 @@ function ReserveConfirmPage() {
   if (done) {
     return (
       <div className="page page-confirm-done">
-        <ReservationStepHeader currentStep={3} title="予約内容確認" />
         <Breadcrumb
           items={[
             { label: 'Top', to: '/' },
-            { label: '診察予約', to: '/menu' },
+            { label: 'メニュー', to: '/menu' },
             { label: isEditing ? '予約一覧' : '診察予約', to: isEditing ? '/reservations' : '/reserve/form' },
             { label: '完了' },
           ]}
         />
+        <ReservationStepHeader currentStep={3} />
         <h1 className="page-title confirm-done-title">
           {isEditing ? '変更が完了しました' : '予約が完了しました'}
         </h1>
@@ -114,15 +119,15 @@ function ReserveConfirmPage() {
 
   return (
     <div className="page page-reserve-confirm">
-      <ReservationStepHeader currentStep={3} title="予約内容確認" />
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
-          { label: '診察予約', to: '/menu' },
+          { label: 'メニュー', to: '/menu' },
           { label: isEditing ? '予約一覧' : '診察予約', to: isEditing ? '/reservations' : '/reserve/form' },
           { label: '予約確認' },
         ]}
       />
+      <ReservationStepHeader currentStep={3} />
       <h1 className="page-title confirm-question">この内容で予約しますか？</h1>
 
       <div className="confirm-card">
@@ -137,13 +142,6 @@ function ReserveConfirmPage() {
       {error && (
         <div className="confirm-error-wrap" role="alert">
           <p className="page-error">{error}</p>
-          {(error.includes('404') || error.includes('API が見つかりません')) && (
-            <p className="confirm-error-hint">
-              <strong>Day5/backend</strong> で <code>run.bat</code> を実行してください。
-              <br />
-              <a href="http://localhost:8001/api" target="_blank" rel="noopener noreferrer">http://localhost:8001/api</a> を開き「Day5 Reservation API」と表示されれば起動済みです。
-            </p>
-          )}
         </div>
       )}
 

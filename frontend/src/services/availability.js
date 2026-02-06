@@ -76,19 +76,17 @@ export async function getAvailableDoctorForSlot(departmentLabel, date, time) {
 }
 
 /**
- * 指定した診療科・日付について、全時間枠の空き状況と自動割当担当医を返す。
- * バックエンド API（getSlots）を使用し、Firestore の複合インデックス不要で取得する。
- * 担当医未指定時のUI表示（○空きあり / ×満枠）に使用。確定時の割当はバックエンドで行う。
+ * 指定した診療科・日付について、全時間枠の空き状況を返す。祝日・理由はバックエンドのレスポンスのみ使用（フロントで判定しない）。
  * @param {string} departmentLabel - 診療科の表示名（その診療科のみ対象）
  * @param {string} date - YYYY-MM-DD
- * @returns {Promise<{ timeSlots: string[], availableDoctorByTime: Record<string, { id: string, name: string } | null> }>}
+ * @returns {Promise<{ timeSlots: string[], availableDoctorByTime: Record<string, { id: string, name: string } | null>, isHoliday?: boolean, reason?: string | null }>}
  */
 export async function getDepartmentAvailabilityForDate(departmentLabel, date) {
   const timeSlots = getTimeSlots();
   const availableDoctorByTime = {};
   if (!departmentLabel || !date) {
     timeSlots.forEach((t) => { availableDoctorByTime[t] = null; });
-    return { timeSlots, availableDoctorByTime };
+    return { timeSlots, availableDoctorByTime, isHoliday: false, reason: null };
   }
   assertQueryReady({ departmentLabel, date });
 
@@ -107,8 +105,14 @@ export async function getDepartmentAvailabilityForDate(departmentLabel, date) {
       timeSlots: timeSlots.length,
       ms: Date.now() - startedAt,
       isDemoFallback: result.isDemoFallback ?? false,
+      isHoliday: result.isHoliday,
     });
-    return { timeSlots, availableDoctorByTime };
+    return {
+      timeSlots,
+      availableDoctorByTime,
+      isHoliday: Boolean(result.isHoliday),
+      reason: result.reason ?? null,
+    };
   } catch (err) {
     logAvailability('error:getDepartmentAvailabilityForDate', { message: err?.message, departmentLabel, date });
     throw err;

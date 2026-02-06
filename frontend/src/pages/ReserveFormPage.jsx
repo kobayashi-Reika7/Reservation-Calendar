@@ -308,7 +308,7 @@ function ReserveFormPage() {
         <Breadcrumb
           items={[
             { label: 'Top', to: '/' },
-            { label: '診察予約', to: '/menu' },
+            { label: 'メニュー', to: '/menu' },
             { label: '日付選択', to: '/calendar' },
             { label: '診察予約' },
           ]}
@@ -332,7 +332,7 @@ function ReserveFormPage() {
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
-          { label: '診察予約', to: '/menu' },
+          { label: 'メニュー', to: '/menu' },
           {
             label: '日付選択',
             to: '/calendar',
@@ -470,14 +470,11 @@ function ReserveFormPage() {
                   <p className="form-step-error-message">
                     取得に失敗しました。通信状況をご確認のうえ、しばらくしてから再度お試しください。
                   </p>
-                  <p className="page-muted form-step-error-detail">詳細: {gridState.error}</p>
                   <div className="form-step-troubleshoot" aria-label="取得ができないときの対処法">
-                    <p className="form-step-troubleshoot-title">取得ができないときの対処法</p>
+                    <p className="form-step-troubleshoot-title">お試しください</p>
                     <ul className="form-step-troubleshoot-list">
-                      <li>バックエンド（Day5/backend）が起動しているか確認する</li>
                       <li>日付や診療科を切り替えて、もう一度読み込みを試す</li>
-                      <li>医師データ未投入の場合は、バックエンドで <code>run_seed_doctors.bat</code> を実行するか、環境変数 <code>USE_DEMO_SLOTS=1</code> を設定する</li>
-                      <li>フロントの API 先（<code>VITE_API_BASE</code>）が正しいか確認する</li>
+                      <li>通信環境（Wi-Fi・回線）をご確認ください</li>
                     </ul>
                   </div>
                 </div>
@@ -528,16 +525,8 @@ function ReserveFormPage() {
               {gridState.status === 'success' && gridState.data?.isDemoFallback && (
                 <div className="form-step-demo-fallback" role="status">
                   <p className="form-step-optional page-muted">
-                    バックエンドに接続できなかったためデモ表示です。予約確定はバックエンド起動後に可能になります。
+                    現在、空き状況は仮の表示です。予約を確定するには、しばらくしてから再度お試しください。
                   </p>
-                  <div className="form-step-troubleshoot" aria-label="取得ができないときの対処法">
-                    <p className="form-step-troubleshoot-title">本番データを表示するには</p>
-                    <ul className="form-step-troubleshoot-list">
-                      <li>バックエンド（<code>python main.py</code> または <code>run.bat</code>）を起動する</li>
-                      <li>医師データを投入する（<code>run_seed_doctors.bat</code>）</li>
-                      <li>日付や診療科を切り替えて、再度読み込む</li>
-                    </ul>
-                  </div>
                 </div>
               )}
               {gridState.status === 'success' && Array.isArray(gridState.data?.slots) && !hasAnyReservable && !isPastDateYmd(viewDate, todayYmd) && (

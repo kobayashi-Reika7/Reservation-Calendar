@@ -52,17 +52,17 @@ function LoginPage() {
 
   return (
     <div className="page page-login auth-page">
-      <ReservationStepHeader currentStep={2} title="新規会員登録 / ログイン" />
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
           { label: 'ログイン' },
         ]}
       />
+      <ReservationStepHeader currentStep={2} />
       <span className="page-hero-icon" aria-hidden>🏥</span>
       <div className="auth-header">
         <h1 className="auth-app-title">診療予約</h1>
-        <p className="auth-app-lead">日付を選んで、かんたん予約</p>
+        <p className="auth-app-lead">ログイン後、予約の入力・確認ができます</p>
       </div>
       <div className="auth-card">
         <h2 className="auth-card-title">ログイン</h2>

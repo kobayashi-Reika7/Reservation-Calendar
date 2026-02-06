@@ -55,13 +55,16 @@ export function getDemoSlotsForDate(dateStr, timeSlots) {
  * @returns {Promise<{ slots: Array<{ time: string, reservable: boolean }>, isDemoFallback?: boolean }>}
  */
 function messageForStatus(status, defaultMessage) {
-  if (status === 404) {
-    return 'API が見つかりません (404)。Day5/backend で run.bat を実行し、http://localhost:8001 でバックエンドを起動してください。';
+  if (status === 404 || status === 502 || status === 503) {
+    return 'サービスに接続できません。しばらくしてから再度お試しください。';
   }
-  if (status === 502 || status === 503) return 'バックエンドに接続できません。しばらくしてから再試行してください。';
   return defaultMessage;
 }
 
+/**
+ * 診療科・日付の空き状況を取得。バックエンドが date, is_holiday, reason, slots を返す。
+ * @returns {{ date?: string, isHoliday?: boolean, reason?: string | null, slots: Array<{ time: string, reservable: boolean }>, isDemoFallback: boolean }}
+ */
 export async function getSlots(department, date, idToken) {
   const params = new URLSearchParams({ department: department || '', date: date || '' });
   try {
@@ -73,13 +76,22 @@ export async function getSlots(department, date, idToken) {
     if (!res.ok) {
       throw new Error(data.detail ?? messageForStatus(res.status, '空き枠の取得に失敗しました。'));
     }
-    const slots = Array.isArray(data) ? data : [];
-    return { slots, isDemoFallback: false };
+    // 空き状況APIは { date, is_holiday, reservable, reason, slots } を返す。祝日は is_holiday: true 必須。
+    const isLegacyArray = Array.isArray(data);
+    const slots = isLegacyArray ? data : (Array.isArray(data?.slots) ? data.slots : []);
+    const isHoliday = isLegacyArray ? false : Boolean(data.is_holiday ?? data.isHoliday);
+    return {
+      date: isLegacyArray ? date : (data.date ?? date),
+      isHoliday,
+      reason: isLegacyArray ? null : (data.reason ?? null),
+      slots,
+      isDemoFallback: false,
+    };
   } catch (err) {
     const { getTimeSlots } = await import('../constants/masterData');
     const timeSlots = getTimeSlots();
     const slots = getDemoSlotsForDate(date, timeSlots);
-    return { slots, isDemoFallback: true };
+    return { date, isHoliday: false, reason: null, slots, isDemoFallback: true };
   }
 }
 
@@ -90,18 +102,22 @@ export async function getSlots(department, date, idToken) {
  * @returns {Promise<{ id: string, date: string, time: string, department: string }>}
  */
 export async function createReservationApi(idToken, body) {
-  const res = await fetch(`${getBaseUrl()}/api/reservations`, {
+  const url = `${getBaseUrl()}/api/reservations`;
+  const payload = {
+    department: body.department ?? '',
+    date: body.date ?? '',
+    time: body.time ?? '',
+  };
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(idToken) },
-    body: JSON.stringify({
-      department: body.department ?? '',
-      date: body.date ?? '',
-      time: body.time ?? '',
-    }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = data.detail ?? messageForStatus(res.status, '予約の保存に失敗しました。');
+    // 404 のときは「Not Found」ではなく起動手順を案内するメッセージを表示
+    const defaultMsg = messageForStatus(res.status, '予約の保存に失敗しました。もう一度お試しください。');
+    const msg = res.status === 404 ? defaultMsg : (typeof data.detail === 'string' ? data.detail : defaultMsg);
     const err = new Error(msg);
     err.status = res.status;
     err.detail = data.detail;

@@ -60,7 +60,7 @@ function CalendarPage() {
       <Breadcrumb
         items={[
           { label: 'Top', to: '/' },
-          { label: '診察予約', to: '/menu' },
+          { label: 'メニュー', to: '/menu' },
           { label: '日付選択' },
         ]}
       />

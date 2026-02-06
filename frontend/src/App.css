@@ -93,30 +93,6 @@ body {
 }
 
 /* ========== ステップ表示付きヘッダー（医療系予約フロー） ========== */
-.step-header-title {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fff;
-  background: #2563eb;
-  /* 写真は使わず、落ち着いたパターンのみ（CSS） */
-  background-image:
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.12) 0px,
-      rgba(255, 255, 255, 0.12) 8px,
-      rgba(255, 255, 255, 0.05) 8px,
-      rgba(255, 255, 255, 0.05) 16px
-    );
-  background-size: cover;
-  border-radius: 12px;
-}
-
 .stepper {
   position: relative;
   width: 100%;
@@ -303,11 +279,158 @@ body {
   border-color: #1d4ed8;
 }
 
+/* 現在選択中の条件（lead の直下・subtitle より上）・1行ずつ表示 */
+.reservation-form-selected {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+.reservation-form-selected-item {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+}
+.reservation-form-selected-empty {
+  color: #94a3b8;
+  font-style: normal;
+}
+
 .reservation-form-subtitle {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
   font-weight: 900;
   color: #374151;
+}
+
+/* 日付ナビゲーション [ 前の5日 ] [ 日付選択 ] [ 次の5日 ] */
+.reservation-form-date-nav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  max-width: 100%;
+}
+.reservation-form-date-nav-btn {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.reservation-form-date-nav-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.reservation-form-date-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #94a3b8;
+}
+.reservation-form-date-nav-center {
+  min-width: 7rem;
+}
+
+/* カレンダーモーダル */
+.reservation-form-calendar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+.reservation-form-calendar-wrap {
+  background: var(--page-bg);
+  border-radius: 12px;
+  padding: 1rem;
+  max-width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+.reservation-form-calendar-wrap .calendar {
+  margin-bottom: 0.75rem;
+}
+.reservation-form-calendar-close {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* 予約グリッド：今日・選択日の強調 */
+.reservation-grid-th-today {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.reservation-grid-th-selected {
+  background: #dbeafe;
+  color: #1e40af;
+  font-weight: 900;
+}
+/* 祝日列：派手な色は使わずグレー＋補足ラベル（バックエンドの isHoliday のみで表示） */
+.reservation-grid-th-holiday:not(.reservation-grid-th-selected) {
+  background: #f1f5f9;
+  color: #64748b;
+  font-weight: 700;
+}
+.reservation-grid-th-badge {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  margin-top: 0.15rem;
+  color: #2563eb;
+}
+/* 祝日：reservation-grid-th-badge の「今日」と同じ位置に赤文字で表示 */
+.reservation-grid-th-badge-holiday {
+  color: #dc2626;
+  /* 一時確認用（DOMに存在するか）: outline: 2px solid red; */
+}
+/* 祝日の列は予約選択不可（×表示・disabled・クリック無効） */
+.reservation-grid-td-holiday .reservation-grid-cell-holiday {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.reservation-form-date-nav-range {
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reservation-form-date-nav-range:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.reservation-form-date-nav-range:disabled {
+  cursor: default;
+  color: #94a3b8;
 }
 
 .reservation-grid-wrap {
@@ -388,21 +511,24 @@ body {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
 }
 
-.reservation-form-selected {
-  margin: 0.75rem 0 0;
-  font-size: 0.95rem;
-  color: #111827;
-}
-
 .reservation-form-footer {
   position: sticky;
   bottom: 0;
   padding: 0.75rem 0 0.25rem;
-  background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,1) 60%);
-  backdrop-filter: blur(6px);
+  background: var(--page-bg);
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .reservation-form-confirm {
   max-width: 500px;
+}
+
+.page-reservation-form .reservation-form-main {
+  padding-bottom: 5rem;
 }
 
 /* ========== ログイン・新規登録 UI（auth-page） ========== */
@@ -414,6 +540,13 @@ body {
   min-height: 50vh;
   padding: var(--page-padding-top) 0 var(--page-padding-bottom);
   background: var(--page-bg-subtle);
+}
+
+/* パンくず・ステップヘッダーは他ページと同じ位置（左寄せ・全幅） */
+.auth-page > .breadcrumb,
+.auth-page > .step-header {
+  align-self: stretch;
+  width: 100%;
 }
 
 .auth-header {
@@ -1506,6 +1639,7 @@ body {
 .confirm-actions {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -1776,7 +1910,7 @@ body {
 
 /* ========== トップページ（ログイン前・さくら総合病院） ========== */
 .top-page {
-  padding: var(--page-padding-top) 0 var(--page-padding-bottom);
+  padding: var(--page-padding-top) 0 6rem;
   background: var(--page-bg-hero);
   min-height: 50vh;
 }
@@ -1887,6 +2021,9 @@ body {
 .top-hours-dd {
   margin: 0;
   color: #111827;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .top-footer {

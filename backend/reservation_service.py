@@ -94,7 +94,10 @@ def _get_available_doctors(department_label: str, date: str, time: str) -> list[
 
 
 def is_reservable(department_label: str, date: str, time: str) -> bool:
-    """診療科・日・時間で予約可能か（1人でも空いていれば True）"""
+    """
+    診療科・日・時間で予約可能か（1人でも空いていれば True）。
+    get_slots（availability API）と create_reservation の両方で使用する共通判定。
+    """
     return len(_get_available_doctors(department_label, date, time)) > 0
 
 
@@ -103,6 +106,37 @@ def assign_doctor(available_doctors: list[dict[str, Any]]) -> dict[str, Any] | N
     if not available_doctors:
         return None
     return available_doctors[0]
+
+
+def _is_japanese_holiday(date_str: str) -> bool:
+    """日本の祝日かどうか（簡易判定）。フロント isJapaneseHoliday と整合させる。"""
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        return False
+    y, m, d = dt.year, dt.month, dt.day
+    fixed = [
+        (1, 1), (2, 11), (4, 29), (5, 3), (5, 4), (5, 5),
+        (8, 11), (11, 3), (11, 23), (12, 23),
+    ]
+    if (m, d) in fixed:
+        return True
+    if m == 2 and d == 23:
+        return True  # 天皇誕生日
+    # 1月第2月曜（成人の日）。weekday(): 0=Mon, 6=Sun
+    first_jan = datetime(y, 1, 1)
+    second_monday_jan = 8 + (7 - first_jan.weekday()) % 7
+    if m == 1 and d == second_monday_jan:
+        return True
+    if m == 7 and d == 18 and y >= 2023:
+        return True  # 海の日
+    if m == 9 and d == 23:
+        return True  # 秋分の日（近似）
+    first_oct = datetime(y, 10, 1)
+    second_monday_oct = 8 + (7 - first_oct.weekday()) % 7
+    if m == 10 and d == second_monday_oct:
+        return True  # スポーツの日
+    return False
 
 
 def _demo_reservable(date_str: str, time_str: str) -> bool:
@@ -119,12 +153,12 @@ def _demo_reservable(date_str: str, time_str: str) -> bool:
 
 def get_slots(department_label: str, date: str) -> list[dict[str, str | bool]]:
     """
-    診療科・日付に対する全時間枠の予約可否を返す。
+    診療科・日付に対する全時間枠の予約可否を返す（祝日はバックエンドで判定し全枠×）。
     フロントはこの結果だけを表示する（○×の計算はしない）。
-    医師が0件または Firestore 取得失敗時はデモ用に平日午前を○にして返す（空き状況取得を確実に）。
-    USE_DEMO_SLOTS=0 のときはデモに fallback せず全枠×を返す。
     """
     if not department_label or not date:
+        return [{"time": t, "reservable": False} for t in TIME_SLOTS]
+    if _is_japanese_holiday(date):
         return [{"time": t, "reservable": False} for t in TIME_SLOTS]
     use_demo_fallback = os.environ.get("USE_DEMO_SLOTS", "1").strip() != "0"
     try:
@@ -150,11 +184,78 @@ def get_slots(department_label: str, date: str) -> list[dict[str, str | bool]]:
         return [{"time": t, "reservable": False} for t in TIME_SLOTS]
 
 
+def get_availability_for_date(department_label: str, date: str) -> dict[str, Any]:
+    """
+    1日分の空き状況を返す。祝日・過去日はバックエンドで判定し、レスポンスに含める。
+    判定優先: 過去日 → 祝日 → 休診 → 医師勤務なし → 可。
+    """
+    slots = [{"time": t, "reservable": False} for t in TIME_SLOTS]
+    if not department_label or not date:
+        return {
+            "date": date or "",
+            "is_holiday": False,
+            "reservable": False,
+            "reason": "closed",
+            "slots": slots,
+        }
+    try:
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        if dt.date() < today.date():
+            return {
+                "date": date,
+                "is_holiday": False,
+                "reservable": False,
+                "reason": "past",
+                "slots": slots,
+            }
+    except (ValueError, TypeError):
+        return {
+            "date": date,
+            "is_holiday": False,
+            "reservable": False,
+            "reason": "closed",
+            "slots": slots,
+        }
+    # 祝日は必ず is_holiday: True と全枠 reservable: False を返す（フロントは isHoliday で表示制御）
+    if _is_japanese_holiday(date):
+        return {
+            "date": date,
+            "is_holiday": True,
+            "reservable": False,
+            "reason": "holiday",
+            "slots": slots,
+        }
+    slot_list = get_slots(department_label, date)
+    any_reservable = any(s.get("reservable") for s in slot_list)
+    return {
+        "date": date,
+        "is_holiday": False,
+        "reservable": any_reservable,
+        "reason": None,
+        "slots": slot_list,
+    }
+
+
 def create_reservation(department_label: str, date: str, time: str, user_id: str) -> dict[str, Any]:
     """
     予約を確定する。担当医は自動割当。
     Firestore users/{uid}/reservations に doctorId 付きで保存（一覧・キャンセル・空き判定の正規情報）。
+    判定は get_availability_for_date と同一：過去日 → 祝日 → is_reservable（勤務・空き）。
     """
+    # 過去日チェック（availability API と同一）
+    try:
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        if dt.date() < today.date():
+            raise ValueError("過去の日付は予約できません。別の日をお選びください。")
+    except (ValueError, TypeError):
+        pass  # 日付パース失敗は下の is_reservable で弾かれる
+    if _is_japanese_holiday(date):
+        raise ValueError("祝日のため予約できません。別の日をお選びください。")
+    # 空き判定は is_reservable と同一（_get_available_doctors を使用）
+    if not is_reservable(department_label, date, time):
+        raise ValueError("この時間は現在予約できません。別の時間をお選びください。")
     available = _get_available_doctors(department_label, date, time)
     doctor = assign_doctor(available)
     if not doctor:
