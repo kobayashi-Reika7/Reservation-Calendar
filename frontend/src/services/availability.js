@@ -75,6 +75,28 @@ export async function getAvailableDoctorForSlot(departmentLabel, date, time) {
   }
 }
 
+/** 空き状況の短期キャッシュ（同一診療科・日付の再取得を省略） */
+const availabilityCache = new Map();
+const CACHE_TTL_MS = 60 * 1000; // 1分
+
+function getCacheKey(departmentLabel, date) {
+  return `${String(departmentLabel).trim()}\n${String(date).trim()}`;
+}
+
+function getCached(key) {
+  const entry = availabilityCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.at > CACHE_TTL_MS) {
+    availabilityCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCached(key, data) {
+  availabilityCache.set(key, { at: Date.now(), data });
+}
+
 /**
  * 指定した診療科・日付について、全時間枠の空き状況を返す。祝日・理由はバックエンドのレスポンスのみ使用（フロントで判定しない）。
  * @param {string} departmentLabel - 診療科の表示名（その診療科のみ対象）
@@ -90,6 +112,13 @@ export async function getDepartmentAvailabilityForDate(departmentLabel, date) {
   }
   assertQueryReady({ departmentLabel, date });
 
+  const cacheKey = getCacheKey(departmentLabel, date);
+  const cached = getCached(cacheKey);
+  if (cached) {
+    logAvailability('result:getDepartmentAvailabilityForDate', { ok: true, fromCache: true });
+    return cached;
+  }
+
   const startedAt = Date.now();
   logAvailability('start:getDepartmentAvailabilityForDate', { departmentLabel, date });
   try {
@@ -100,6 +129,13 @@ export async function getDepartmentAvailabilityForDate(departmentLabel, date) {
       const slot = slots.find((s) => s.time === t);
       availableDoctorByTime[t] = slot?.reservable === true ? { id: 'auto', name: '（自動割当）' } : null;
     });
+    const out = {
+      timeSlots,
+      availableDoctorByTime,
+      isHoliday: Boolean(result.isHoliday),
+      reason: result.reason ?? null,
+    };
+    setCached(cacheKey, out);
     logAvailability('result:getDepartmentAvailabilityForDate', {
       ok: true,
       timeSlots: timeSlots.length,
@@ -107,12 +143,7 @@ export async function getDepartmentAvailabilityForDate(departmentLabel, date) {
       isDemoFallback: result.isDemoFallback ?? false,
       isHoliday: result.isHoliday,
     });
-    return {
-      timeSlots,
-      availableDoctorByTime,
-      isHoliday: Boolean(result.isHoliday),
-      reason: result.reason ?? null,
-    };
+    return out;
   } catch (err) {
     logAvailability('error:getDepartmentAvailabilityForDate', { message: err?.message, departmentLabel, date });
     throw err;

@@ -10,6 +10,7 @@ import ReservationStepHeader from '../components/ReservationStepHeader';
 import Calendar from '../components/Calendar';
 import { CATEGORIES, DEPARTMENTS_BY_CATEGORY } from '../constants/masterData';
 import { getDepartmentAvailabilityForDate } from '../services/availability';
+import appHero from '../assets/app-hero.svg';
 
 const HOSPITAL_NAME = 'さくら総合病院';
 const TYPES = ['初診', '再診'];
@@ -111,7 +112,7 @@ export default function ReservationFormPage() {
     const id = setInterval(() => {
       const d = new Date();
       setCurrentTimeStr(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-    }, 60000);
+    }, 15000); // 15秒間隔（過ぎた時刻の × 表示を早く更新。バックでも「今日の過去時刻」を検証）
     return () => clearInterval(id);
   }, []);
 
@@ -141,7 +142,7 @@ export default function ReservationFormPage() {
     return `${mon.getFullYear()}/${mon.getMonth() + 1}/${mon.getDate()}（${WEEKDAY_JP[mon.getDay()]}）〜${fri.getMonth() + 1}/${fri.getDate()}（${WEEKDAY_JP[fri.getDay()]}）`;
   }, [weekDates]);
 
-  // weekStartDate または department が変わったら空き状況を再取得
+  // weekStartDate または department が変わったら空き状況を再取得（到着次第で1日ずつ表示）
   useEffect(() => {
     let canceled = false;
     setError('');
@@ -154,37 +155,30 @@ export default function ReservationFormPage() {
     setLoading(true);
 
     const dates = weekDates.map((d) => toDateStr(d));
-    Promise.all(
-      dates.map((dateStr) =>
-        getDepartmentAvailabilityForDate(department, dateStr).then((r) => ({ dateStr, ...r }))
-      )
-    )
-      .then((rows) => {
-        if (canceled) return;
-        const next = {};
-        rows.forEach((r) => {
+    let completed = 0;
+    const total = dates.length;
+
+    dates.forEach((dateStr) => {
+      getDepartmentAvailabilityForDate(department, dateStr)
+        .then((r) => {
+          if (canceled) return;
           const row = {
-            dateStr: r.dateStr,
+            dateStr,
             timeSlots: r.timeSlots ?? [],
             availableDoctorByTime: r.availableDoctorByTime ?? {},
             isHoliday: Boolean(r.isHoliday),
             reason: r.reason ?? null,
           };
-          next[r.dateStr] = row;
-          // 一時確認用: 祝日フラグがUI用データに渡っているか
-          if (typeof console !== 'undefined' && console.log) {
-            console.log('date:', row.dateStr, 'isHoliday:', row.isHoliday);
-          }
+          setAvailByDate((prev) => ({ ...prev, [dateStr]: row }));
+        })
+        .catch(() => {
+          if (!canceled) setError('空き状況の取得に一時失敗しました。しばらくしてから再度お試しください。');
+        })
+        .finally(() => {
+          completed += 1;
+          if (completed >= total && !canceled) setLoading(false);
         });
-        setAvailByDate(next);
-      })
-      .catch(() => {
-        if (canceled) return;
-        setError('空き状況の取得に失敗しました。しばらくしてから再度お試しください。');
-      })
-      .finally(() => {
-        if (!canceled) setLoading(false);
-      });
+    });
 
     return () => { canceled = true; };
   }, [department, weekStartDate, weekDates]);
@@ -243,7 +237,7 @@ export default function ReservationFormPage() {
     if (!canProceed) return;
     setError('');
     if (!isSlotAvailable(selectedDate, selectedTime)) {
-      setError('この時間は現在予約できません。別の時間をお選びください。');
+      setError('この時間は現在ご予約いただけません。別の日時をお選びください。');
       return;
     }
     navigate('/reserve/confirm', {
@@ -280,13 +274,19 @@ export default function ReservationFormPage() {
 
       <main className="reservation-form-main">
         <header className="reservation-form-head">
+          <div className="reservation-form-hero">
+            <img src={appHero} alt="" className="reservation-form-hero-img app-hero-img" width="160" height="80" />
+          </div>
           <p className="reservation-form-hospital">
             <span aria-hidden>🏥</span> {HOSPITAL_NAME}
           </p>
-          <h2 className="reservation-form-title">診察予約入力</h2>
+          <h2 className="reservation-form-title reservation-form-title-lead">
+            診療科目・日時を選んで<br />かんたん予約
+          </h2>
+          <p className="reservation-form-lead">ご希望の診療科と日時を選んでください。</p>
         </header>
 
-        {error && <p className="page-error" role="alert">{error}</p>}
+        {error && <p className="page-error page-error-friendly" role="alert">{error}</p>}
 
         <section className="reservation-form-section">
           <label className="reservation-form-label" htmlFor="reservation-dept">
@@ -309,6 +309,7 @@ export default function ReservationFormPage() {
 
         <section className="reservation-form-section">
           <p className="reservation-form-label">選択した診療科目の種別をお選びください</p>
+          <p className="reservation-form-hint">※ 診療科目ごとに初診・再診を選択してください。</p>
           <div className="reservation-form-type-buttons" role="group" aria-label="種別">
             {TYPES.map((t) => (
               <button
@@ -321,42 +322,32 @@ export default function ReservationFormPage() {
               </button>
             ))}
           </div>
+          {type && (
+            <p className="reservation-form-type-desc" aria-live="polite">
+              {type === '初診' ? '当院で初めて受診する診療科目です' : '当院で過去に受診したことがある診療科目です'}
+            </p>
+          )}
         </section>
 
         <section className="reservation-form-section">
           {/* 現在選択中の条件（lead の直下・subtitle より上） */}
           <div className="reservation-form-selected" role="status" aria-live="polite">
-            {department && (
+            {selectedDate && selectedTime ? (
               <span className="reservation-form-selected-item">
-                診療科：{department}
-              </span>
-            )}
-            {type && (
-              <span className="reservation-form-selected-item">
-                種別：{type}
-              </span>
-            )}
-            {selectedDate && (
-              <span className="reservation-form-selected-item">
-                日付：{formatMdDow(
+                選択日時：{formatMdDow(
                   (() => {
                     const [y, m, d] = selectedDate.split('-').map(Number);
                     return new Date(y, m - 1, d);
                   })()
-                )}
+                )}{selectedTime}
               </span>
-            )}
-            {selectedTime && (
-              <span className="reservation-form-selected-item">
-                時間：{selectedTime}
-              </span>
-            )}
-            {!department && !type && !selectedDate && !selectedTime && (
+            ) : (
               <span className="reservation-form-selected-empty">未選択</span>
             )}
           </div>
 
-          <h3 className="reservation-form-subtitle">予約可能時間（○：予約可 / ×：不可）</h3>
+          <h3 className="reservation-form-subtitle">予約可能な日時を選んでください</h3>
+          <p className="reservation-form-hint">○：ご予約可　×：ご予約不可（祝日・満枠など）</p>
 
           {/* 週切り替えナビ: ＜ 前週   2026/2/9(月)〜2/13(金)   翌週 ＞ */}
           <div className="reservation-form-date-nav" aria-label="週の切り替え">
@@ -392,7 +383,7 @@ export default function ReservationFormPage() {
 
           {!department ? (
             <p className="page-muted">まず診療科目を選択してください。</p>
-          ) : loading ? (
+          ) : loading && Object.keys(availByDate).length === 0 ? (
             <p className="page-muted">空き状況を読み込み中…</p>
           ) : (
             <div className="reservation-grid-wrap" role="region" aria-label="勤務日の予約枠">
@@ -406,10 +397,6 @@ export default function ReservationFormPage() {
                       const isHoliday = Boolean(row?.isHoliday);
                       const isToday = dateStr === toDateStr(today);
                       const isSelected = selectedDate === dateStr;
-                      // 一時確認用: 描画時点で row.isHoliday が true になっているか
-                      if (typeof console !== 'undefined' && console.log && row) {
-                        console.log('date:', dateStr, 'isHoliday:', row.isHoliday);
-                      }
                       return (
                         <th
                           key={dateStr}
@@ -468,11 +455,6 @@ export default function ReservationFormPage() {
             </div>
           )}
 
-          {selectedDate && selectedTime && (
-            <p className="page-lead reservation-form-lead" role="status">
-              選択中：<strong>{selectedDate}</strong> {selectedTime}
-            </p>
-          )}
         </section>
 
         <footer className="reservation-form-footer">
@@ -482,7 +464,7 @@ export default function ReservationFormPage() {
             disabled={!canProceed || loading}
             onClick={handleConfirm}
           >
-            予約内容確認へ
+            内容を確認する
           </button>
         </footer>
       </main>

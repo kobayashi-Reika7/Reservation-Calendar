@@ -32,7 +32,7 @@ function ReserveConfirmPage() {
 
   const handleConfirm = async () => {
     if (!user?.uid || !selectedDate || !time || !department) {
-      setError('予約情報が不足しています。');
+      setError('ご予約内容が不足しています。最初からやり直してください。');
       return;
     }
     const payload = {
@@ -54,7 +54,15 @@ function ReserveConfirmPage() {
       await createReservationApi(idToken, payload);
       setDone(true);
     } catch (err) {
-      setError(err?.message ?? '予約を確定できませんでした。もう一度お試しください。');
+      // ユーザーには詳細を表示せず汎用メッセージのみ。詳細はコンソールに出力
+      if (typeof console !== 'undefined' && console.error) {
+        console.error('[予約確定エラー]', {
+          status: err?.status,
+          detail: err?.detail,
+          message: err?.message,
+        }, err);
+      }
+      setError('ご予約を確定できませんでした。お手数ですが、もう一度お試しください。');
     } finally {
       setLoading(false);
     }
@@ -72,7 +80,7 @@ function ReserveConfirmPage() {
             { label: '予約確認' },
           ]}
         />
-        <p className="page-error">予約内容がありません。</p>
+        <p className="page-error page-error-friendly">ご予約内容がありません。日時の選択からやり直してください。</p>
         <div className="btn-wrap-center">
           <button type="button" className="btn btn-secondary btn-nav" onClick={() => navigate('/reserve/form')}>
             診察予約に戻る
@@ -97,7 +105,8 @@ function ReserveConfirmPage() {
         <h1 className="page-title confirm-done-title">
           {isEditing ? '変更が完了しました' : '予約が完了しました'}
         </h1>
-        <div className="confirm-card">
+        <p className="confirm-done-lead">ご予約ありがとうございます。</p>
+        <div className="confirm-card confirm-card-done">
           <p><span className="confirm-label">日付</span> {selectedDate}</p>
           <p><span className="confirm-label">時間</span> {time}</p>
           <p><span className="confirm-label">診療科</span> {department}</p>
@@ -108,9 +117,9 @@ function ReserveConfirmPage() {
           <button
             type="button"
             className="btn btn-primary btn-nav"
-            onClick={() => navigate(isEditing ? '/reservations' : '/reserve/form')}
+            onClick={() => navigate('/menu')}
           >
-            {isEditing ? '予約一覧へ' : '診察予約に戻る'}
+            メニューに戻る
           </button>
         </div>
       </div>
@@ -128,7 +137,8 @@ function ReserveConfirmPage() {
         ]}
       />
       <ReservationStepHeader currentStep={3} />
-      <h1 className="page-title confirm-question">この内容で予約しますか？</h1>
+      <h1 className="page-title confirm-question">ご予約内容の確認</h1>
+      <p className="confirm-lead">以下の内容でよろしければ「予約を確定する」を押してください。</p>
 
       <div className="confirm-card">
         <p><span className="confirm-label">日付</span> {selectedDate}</p>
@@ -141,33 +151,35 @@ function ReserveConfirmPage() {
 
       {error && (
         <div className="confirm-error-wrap" role="alert">
-          <p className="page-error">{error}</p>
+          <p className="page-error page-error-friendly">{error}</p>
         </div>
       )}
 
-      {loading ? (
+      {loading && (
         <div className="confirm-loading" aria-live="polite">
           <span className="confirm-loading-spinner" aria-hidden="true" />
           <span>保存中…</span>
         </div>
-      ) : (
-        <div className="confirm-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleConfirm}
-          >
-            予約を確定する
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-nav"
-            onClick={() => navigate(-1)}
-          >
-            修正する
-          </button>
-        </div>
       )}
+      <div className="confirm-actions">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleConfirm}
+          disabled={loading}
+          aria-busy={loading}
+        >
+          予約を確定する
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-nav"
+          onClick={() => navigate(-1)}
+          disabled={loading}
+        >
+          内容を修正する
+        </button>
+      </div>
     </div>
   );
 }

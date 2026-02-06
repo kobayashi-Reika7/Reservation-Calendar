@@ -7,11 +7,14 @@
 """
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
 from typing import Any
 
 from firebase_admin import firestore
+
+logger = logging.getLogger(__name__)
 
 from firebase_admin_client import init_firebase_admin
 
@@ -109,7 +112,7 @@ def assign_doctor(available_doctors: list[dict[str, Any]]) -> dict[str, Any] | N
 
 
 def _is_japanese_holiday(date_str: str) -> bool:
-    """日本の祝日かどうか（簡易判定）。フロント isJapaneseHoliday と整合させる。"""
+    """日本の祝日かどうか（簡易判定）。フロント utils/holiday.js isJapaneseHoliday と同一条件にすること。"""
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
     except (ValueError, TypeError):
@@ -243,41 +246,119 @@ def create_reservation(department_label: str, date: str, time: str, user_id: str
     Firestore users/{uid}/reservations に doctorId 付きで保存（一覧・キャンセル・空き判定の正規情報）。
     判定は get_availability_for_date と同一：過去日 → 祝日 → is_reservable（勤務・空き）。
     """
+    logger.info(
+        "create_reservation start: department=%r date=%r time=%r user_id=%r",
+        department_label, date, time, user_id,
+    )
+    # 入力の正規化（None / 空は業務上 400 で弾く想定だが、ここでも安全のため）
+    department_label = (department_label or "").strip()
+    date = (date or "").strip()
+    time = (time or "").strip()
+    user_id = (user_id or "").strip()
+    if not user_id:
+        raise ValueError("ユーザーIDが取得できません。再ログインしてください。")
+    if not department_label or not date or not time:
+        raise ValueError("診療科・日付・時間は必須です。")
+
     # 過去日チェック（availability API と同一）
     try:
         dt = datetime.strptime(date, "%Y-%m-%d")
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         if dt.date() < today.date():
             raise ValueError("過去の日付は予約できません。別の日をお選びください。")
-    except (ValueError, TypeError):
+    except ValueError as e:
+        if "過去の日付" in str(e):
+            raise
         pass  # 日付パース失敗は下の is_reservable で弾かれる
+    except TypeError:
+        pass
     if _is_japanese_holiday(date):
         raise ValueError("祝日のため予約できません。別の日をお選びください。")
-    # 空き判定は is_reservable と同一（_get_available_doctors を使用）
-    if not is_reservable(department_label, date, time):
-        raise ValueError("この時間は現在予約できません。別の時間をお選びください。")
-    available = _get_available_doctors(department_label, date, time)
+
+    # 今日の過去時刻チェック（フロントの currentTimeStr 更新遅れがあっても二重で防ぐ）
+    try:
+        dt = datetime.strptime(date, "%Y-%m-%d")
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        now_str = datetime.now().strftime("%H:%M")
+        if dt.date() == today.date() and time <= now_str:
+            raise ValueError("この時刻はすでに過ぎています。別の時間をお選びください。")
+    except ValueError as e:
+        if "すでに過ぎています" in str(e):
+            raise
+        pass  # strptime 失敗等
+    except TypeError:
+        pass
+
+    logger.info("create_reservation passed validation: past/holiday/today-time checks ok")
+
+    # 空き判定は is_reservable と同一（_get_available_doctors を使用）。医師未登録時はデモ枠で許可
+    use_demo = os.environ.get("USE_DEMO_SLOTS", "1").strip() != "0"
+    try:
+        available = _get_available_doctors(department_label, date, time)
+    except Exception as e:
+        logger.exception("create_reservation _get_available_doctors failed: %s", e)
+        raise
     doctor = assign_doctor(available)
+    logger.info(
+        "create_reservation doctors: available_count=%s use_demo=%s doctor=%s",
+        len(available), use_demo, (doctor.get("id"), doctor.get("name")) if isinstance(doctor, dict) else doctor,
+    )
+    if not doctor and use_demo and _demo_reservable(date, time):
+        doctor = {"id": "demo", "name": "（自動割当）"}
     if not doctor:
-        raise ValueError("この時間は予約できません。別の時間をお選びください。")
+        raise ValueError("この時間は現在予約できません。別の時間をお選びください。")
 
-    db = _get_firestore()
-    ref = db.collection("users").document(user_id).collection("reservations")
-    _, doc_ref = ref.add({
-        "date": date,
-        "time": time,
+    # 担当医の id/name を安全に取得（型不整合・キー欠損で 500 にしない）
+    doctor_dict = doctor if isinstance(doctor, dict) else {}
+    doctor_id = doctor_dict.get("id")
+    doctor_name = doctor_dict.get("name")
+    if doctor_id is None:
+        doctor_id = "demo"
+    if doctor_name is None:
+        doctor_name = "（自動割当）"
+    doctor_id = str(doctor_id).strip() or "demo"
+    doctor_name = str(doctor_name).strip() or "（自動割当）"
+
+    # Firestore 保存用ペイロード（None を渡さない・文字列は str に統一。キー存在チェック済み）
+    payload = {
+        "date": str(date) if date is not None else "",
+        "time": str(time) if time is not None else "",
         "category": "",
-        "department": department_label,
+        "department": str(department_label) if department_label is not None else "",
         "purpose": "",
-        "doctor": doctor["name"],
-        "doctorId": doctor["id"],
+        "doctor": doctor_name,
+        "doctorId": doctor_id,
         "createdAt": firestore.SERVER_TIMESTAMP,
-    })
+    }
+    # 最終ガード: いずれも None にしない（Firestore が受け付けない場合がある）
+    for k in list(payload.keys()):
+        if payload[k] is None and k != "createdAt":
+            payload[k] = ""
 
+    path_log = f"users/{user_id}/reservations"
+    logger.info("create_reservation Firestore add: path=%s payload_keys=%s", path_log, list(payload.keys()))
+
+    if not user_id:
+        raise ValueError("ユーザーIDが空のため保存できません。")
+
+    try:
+        db = _get_firestore()
+    except Exception as e:
+        logger.exception("create_reservation _get_firestore failed: %s", e)
+        raise
+    try:
+        ref = db.collection("users").document(user_id).collection("reservations")
+        _, doc_ref = ref.add(payload)
+        doc_id = doc_ref.id if doc_ref else ""
+    except Exception as e:
+        logger.exception("create_reservation Firestore ref.add failed: path=%s error=%s", path_log, e)
+        raise
+
+    logger.info("create_reservation done: doc_id=%s", doc_id)
     return {
-        "id": doc_ref.id,
+        "id": doc_id,
         "departmentId": department_label,
-        "doctorId": doctor["id"],
+        "doctorId": doctor_id,
         "date": date,
         "time": time,
         "userId": user_id,

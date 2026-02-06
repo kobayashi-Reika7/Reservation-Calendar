@@ -11,28 +11,28 @@
    python -m venv venv
    venv\Scripts\pip install -r requirements.txt
 
-   # 起動（ポート 8001）
+   # 起動（ポート 8002）
    run.bat
    ```
 
    または:
 
    ```bash
-   venv\Scripts\python -m uvicorn main:app --reload --host 127.0.0.1 --port 8001
+   venv\Scripts\python -m uvicorn main:app --reload --host 127.0.0.1 --port 8002
    ```
 
 2. 起動後、以下で動作確認できます。
 
-   - ヘルスチェック: http://localhost:8001/health
-   - 空き枠 API: http://localhost:8001/api/slots?department=循環器内科&date=2026-02-10
+   - ヘルスチェック: http://localhost:8002/health
+   - 空き枠 API: http://localhost:8002/api/slots?department=循環器内科&date=2026-02-10
 
-3. フロントエンドは **http://localhost:8001** をデフォルトで参照します（`VITE_API_BASE` 未設定時）。
+3. フロントエンドは **http://localhost:8002** をデフォルトで参照します（`VITE_API_BASE` 未設定時）。
 
 ## 404 が出る場合
 
-- ポート 8001 で**このバックエンド（Day5/backend）**が動いているか確認してください。
-- 別のアプリが 8001 を使っていると、/api/slots や /api/reservations が 404 になります。
-- 必ず **Day5/backend** ディレクトリで `run.bat` または `uvicorn main:app --port 8001` を実行してください。
+- ポート 8002 で**このバックエンド（Day5/backend）**が動いているか確認してください。
+- 別のアプリが 8002 を使っていると、/api/slots や /api/reservations が 404 になります。
+- 必ず **Day5/backend** ディレクトリで `run.bat` または `uvicorn main:app --port 8002` を実行してください。
 
 ## 医師データ（空き枠の○を出す）
 

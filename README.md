@@ -28,10 +28,10 @@ python -m venv venv
 venv\Scripts\activate   # Windows
 # source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
-uvicorn main:app --reload --host 127.0.0.1 --port 8001
+uvicorn main:app --reload --host 127.0.0.1 --port 8002
 ```
 
-- API: http://localhost:8001
+- API: http://localhost:8002
 - エンドポイント: `GET /users/me`（IDトークン検証）, `GET /health`
 
 **2. フロントエンド**
@@ -39,7 +39,7 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8001
 ```bash
 cd frontend
 cp .env.example .env
-# .env に Firebase（VITE_FIREBASE_*）と必要なら VITE_API_BASE=http://localhost:8001
+# .env に Firebase（VITE_FIREBASE_*）と必要なら VITE_API_BASE=http://localhost:8002
 npm install
 npm run dev
 ```

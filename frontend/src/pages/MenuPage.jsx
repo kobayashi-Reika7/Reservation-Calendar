@@ -6,8 +6,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../components/Breadcrumb';
 import { logout } from '../services/auth';
+import appHero from '../assets/app-hero.svg';
 
-const HOSPITAL_NAME = 'さくら総合病院';
+const MENU_TITLE = 'ご予約メニュー';
+const MENU_LEAD = 'かんたん予約、またはご予約内容の確認ができます。';
 
 function MenuPage() {
   const navigate = useNavigate();
@@ -31,11 +33,11 @@ function MenuPage() {
       />
 
       <header className="menu-header">
-        <span className="page-hero-icon" aria-hidden>🏥</span>
-        <h1 className="page-title menu-title">{HOSPITAL_NAME}｜診察予約</h1>
-        <p className="menu-lead">
-          新規予約・予約確認ができます。
-        </p>
+        <div className="menu-hero">
+          <img src={appHero} alt="" className="menu-hero-img app-hero-img" width="160" height="80" />
+        </div>
+        <h1 className="page-title menu-title">{MENU_TITLE}</h1>
+        <p className="menu-lead">{MENU_LEAD}</p>
       </header>
 
       <div className="menu-buttons">
@@ -44,18 +46,18 @@ function MenuPage() {
           className="menu-btn menu-btn-primary"
           onClick={() => navigate('/reserve/form')}
         >
-          <span className="menu-btn-icon" aria-hidden>1️⃣</span>
+          <span className="menu-btn-icon" aria-hidden>📅</span>
           <span className="menu-btn-text">予約する</span>
-          <span className="menu-btn-sub">新規予約を行う</span>
+          <span className="menu-btn-sub">診療科・日時を選んで新規予約</span>
         </button>
         <button
           type="button"
           className="menu-btn menu-btn-secondary"
           onClick={() => navigate('/reservations')}
         >
-          <span className="menu-btn-icon" aria-hidden>2️⃣</span>
+          <span className="menu-btn-icon" aria-hidden>📋</span>
           <span className="menu-btn-text">予約を確認する</span>
-          <span className="menu-btn-sub">自分の予約一覧を確認</span>
+          <span className="menu-btn-sub">ご予約一覧の確認・キャンセル</span>
         </button>
       </div>
       <div className="menu-logout">

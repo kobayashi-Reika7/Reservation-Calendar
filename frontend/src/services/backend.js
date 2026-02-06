@@ -2,7 +2,7 @@
  * バックエンド API 呼び出し
  * 認証は Firebase に一本化。空き枠・予約作成はバックエンドが判定（フロントは表示のみ）。
  */
-const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8001';
+const getBaseUrl = () => import.meta.env.VITE_API_BASE ?? 'http://localhost:8002';
 
 function authHeaders(idToken) {
   return idToken ? { Authorization: `Bearer ${idToken}` } : {};
@@ -88,6 +88,17 @@ export async function getSlots(department, date, idToken) {
       isDemoFallback: false,
     };
   } catch (err) {
+    const baseUrl = getBaseUrl();
+    if (err?.status === 404 && typeof fetch !== 'undefined') {
+      try {
+        const check = await fetch(`${baseUrl}/api`, { method: 'GET' });
+        if (check.status === 404) {
+          console.warn(
+            '[Day5] バックエンドに接続できません。Day5 のバックエンド（Day5/backend/run.bat）がポート 8002 で起動しているか確認してください。'
+          );
+        }
+      } catch (_) {}
+    }
     const { getTimeSlots } = await import('../constants/masterData');
     const timeSlots = getTimeSlots();
     const slots = getDemoSlotsForDate(date, timeSlots);
@@ -115,10 +126,20 @@ export async function createReservationApi(idToken, body) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    // 404 のときは「Not Found」ではなく起動手順を案内するメッセージを表示
-    const defaultMsg = messageForStatus(res.status, '予約の保存に失敗しました。もう一度お試しください。');
-    const msg = res.status === 404 ? defaultMsg : (typeof data.detail === 'string' ? data.detail : defaultMsg);
-    const err = new Error(msg);
+    // ユーザーには詳細を見せず汎用メッセージのみ。詳細はコンソールに出力
+    const userMsg =
+      res.status >= 500
+        ? 'サーバーでエラーが発生しました。しばらくしてから再度お試しください。'
+        : '予約を確定できませんでした。入力内容を確認してもう一度お試しください。';
+    if (typeof console !== 'undefined' && console.error) {
+      console.error('[createReservationApi]', {
+        status: res.status,
+        statusText: res.statusText,
+        detail: data.detail,
+        url,
+      });
+    }
+    const err = new Error(userMsg);
     err.status = res.status;
     err.detail = data.detail;
     throw err;

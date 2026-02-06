@@ -6,10 +6,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { CATEGORIES, DEPARTMENTS_BY_CATEGORY, getTimeSlots } from '../constants/masterData';
+import appHero from '../assets/app-hero.svg';
 
 const HOSPITAL_NAME = 'さくら総合病院';
 const CATCH_COPY = '地域の皆様の健やかな暮らしを支えます';
-const INTRO = 'さくら総合病院は、内科からリハビリまで幅広い診療科を備えた総合病院です。安心してご来院ください。';
+const INTRO = '内科からリハビリまで幅広い診療科を備えた総合病院です。安心してご来院ください。';
+const TOP_LEAD = '診療科・日時を選んで、かんたんにWeb予約ができます。';
 
 function formatTime(t) {
   return String(t || '').replace(/^0/, '');
@@ -58,9 +60,12 @@ function TopPage() {
   return (
     <div className="page top-page">
       <header className="top-header">
-        <span className="top-icon" aria-hidden>🏥</span>
+        <div className="top-hero">
+          <img src={appHero} alt="" className="top-hero-img app-hero-img" width="160" height="80" />
+        </div>
         <h1 className="top-title">{HOSPITAL_NAME}</h1>
         <p className="top-catch">{CATCH_COPY}</p>
+        <p className="top-lead">{TOP_LEAD}</p>
       </header>
 
       <section className="top-intro">
@@ -103,7 +108,7 @@ function TopPage() {
           className="btn btn-primary btn-nav top-reserve-btn"
           onClick={handleReserve}
         >
-          Web予約はこちら
+          {user ? '予約メニューへ' : 'Web予約はこちら（ログイン）'}
         </button>
       </footer>
     </div>

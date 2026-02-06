@@ -5,9 +5,12 @@ FastAPI バックエンド - 予約アプリ用 API
 """
 from __future__ import annotations
 
+import logging
 import os
 
 from fastapi import FastAPI, HTTPException, Header
+
+logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import UserResponse, SyncUserBody, SlotItem, AvailabilityForDateResponse, CreateReservationBody, ReservationCreated
@@ -16,8 +19,8 @@ from firebase_admin_client import verify_id_token
 from reservation_service import get_availability_for_date, create_reservation as create_reservation_service
 
 # CORS: フロントエンド（Vite 開発サーバー）を許可
-# 環境変数が設定されていても、ローカル開発用の origin は常に許可する（CORS で詰まりやすいため）
-_default_origins = ["http://localhost:5200", "http://127.0.0.1:5200"]
+# 5200 が使用中だと Vite が 5201 を使うため、5201 も許可する
+_default_origins = ["http://localhost:5200", "http://127.0.0.1:5200", "http://localhost:5201", "http://127.0.0.1:5201"]
 _origins_env = os.getenv("ALLOWED_ORIGINS", "").strip()
 _extra_origins = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else []
 ALLOWED_ORIGINS = list(dict.fromkeys([*_default_origins, *_extra_origins]))
@@ -149,4 +152,5 @@ def api_create_reservation(body: CreateReservationBody, authorization: str | Non
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
+        logger.exception("POST /api/reservations failed: %s", e)
         raise HTTPException(status_code=500, detail="予約の保存に失敗しました。") from e

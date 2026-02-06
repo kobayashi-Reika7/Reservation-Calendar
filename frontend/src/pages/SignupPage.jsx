@@ -9,6 +9,7 @@ import ReservationStepHeader from '../components/ReservationStepHeader';
 import { TextField } from '../components/InputForm';
 import { syncMe } from '../services/backend';
 import { signup } from '../services/auth';
+import appHero from '../assets/app-hero.svg';
 
 function SignupPage() {
   const navigate = useNavigate();
@@ -65,7 +66,9 @@ function SignupPage() {
         ]}
       />
       <ReservationStepHeader currentStep={2} />
-      <span className="page-hero-icon" aria-hidden>🏥</span>
+      <div className="auth-hero">
+        <img src={appHero} alt="" className="app-hero-img" width="160" height="80" />
+      </div>
       <div className="auth-header">
         <h1 className="auth-app-title">診療予約</h1>
         <p className="auth-app-lead">日付を選んで、かんたん予約</p>
