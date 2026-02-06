@@ -1,6 +1,7 @@
 """
 FastAPI バックエンド - 予約アプリ用 API
-新規登録データを DB に格納し、ログイン照合を提供する（ローカルテスト用）
+- ユーザー同期・認証
+- 空き枠取得・予約作成（勤務判定・医師割当はすべてバックエンド）
 """
 from __future__ import annotations
 
@@ -9,9 +10,10 @@ import os
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import UserResponse, SyncUserBody
+from models import UserResponse, SyncUserBody, SlotItem, AvailabilityForDateResponse, CreateReservationBody, ReservationCreated
 import store
 from firebase_admin_client import verify_id_token
+from reservation_service import get_availability_for_date, create_reservation as create_reservation_service
 
 # CORS: フロントエンド（Vite 開発サーバー）を許可
 # 環境変数が設定されていても、ローカル開発用の origin は常に許可する（CORS で詰まりやすいため）
@@ -90,3 +92,61 @@ def sync_user(body: SyncUserBody):
 def list_users():
     """ユーザー一覧（管理・確認用）"""
     return store.get_all_users()
+
+
+# ----- 予約・空き枠 API（業務ロジックはバックエンド専用） -----
+
+
+@app.get("/api")
+def api_info():
+    """Day5 予約 API であることを示す（404 時に別サーバーが動いていないか確認用）"""
+    return {
+        "name": "Day5 Reservation API",
+        "endpoints": {
+            "slots": "GET /api/slots",
+            "reservations": "POST /api/reservations",
+        },
+    }
+
+
+@app.get("/api/slots", response_model=AvailabilityForDateResponse)
+def api_slots(department: str = "", date: str = "", authorization: str | None = Header(default=None)):
+    """
+    診療科・日付の空き枠を返す。祝日・過去日はバックエンドで判定し date, is_holiday, reason を含める。
+    フロントは祝日判定を行わず、このレスポンスのみで表示する。
+    """
+    department = (department or "").strip()
+    date = (date or "").strip()
+    try:
+        return get_availability_for_date(department, date)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/api/reservations", response_model=ReservationCreated)
+def api_create_reservation(body: CreateReservationBody, authorization: str | None = Header(default=None)):
+    """
+    予約を確定する。担当医はバックエンドで自動割当。
+    認証必須。
+    """
+    token = _get_bearer_token(authorization)
+    try:
+        claims = verify_id_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="IDトークンの検証に失敗しました。") from e
+    uid = str(claims.get("uid", ""))
+    if not uid:
+        raise HTTPException(status_code=401, detail="トークンから uid を取得できません。")
+
+    department = (body.department or "").strip()
+    date = (body.date or "").strip()
+    time = (body.time or "").strip()
+    if not department or not date or not time:
+        raise HTTPException(status_code=400, detail="診療科・日付・時間は必須です。")
+    try:
+        out = create_reservation_service(department, date, time, uid)
+        return ReservationCreated(id=out["id"], date=out["date"], time=out["time"], department=out["departmentId"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="予約の保存に失敗しました。") from e

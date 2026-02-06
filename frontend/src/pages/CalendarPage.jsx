@@ -6,6 +6,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
 import Calendar from '../components/Calendar';
+import Breadcrumb from '../components/Breadcrumb';
 import { getReservationsByUser } from '../services/reservation';
 
 function CalendarPage() {
@@ -56,9 +57,16 @@ function CalendarPage() {
 
   return (
     <div className="page page-calendar">
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: 'メニュー', to: '/menu' },
+          { label: '日付選択' },
+        ]}
+      />
       <h1 className="page-title">予約日を選んでください</h1>
       <p className="page-lead calendar-hint">
-        選べる日（白い日付）をタップ → 予約内容の入力画面へ進みます。
+        
       </p>
       <Calendar
         selectedDate={selectedDate}
@@ -87,8 +95,8 @@ function CalendarPage() {
           </ul>
         )}
       </section>
-      <div className="page-actions calendar-actions">
-        <button type="button" className="btn btn-secondary" onClick={() => navigate('/menu')}>
+      <div className="page-actions calendar-actions btn-wrap-center">
+        <button type="button" className="btn btn-secondary btn-nav" onClick={() => navigate('/menu')}>
           メニューに戻る
         </button>
       </div>

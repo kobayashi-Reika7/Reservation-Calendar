@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
+import Breadcrumb from '../components/Breadcrumb';
 import { getReservationsByUser, deleteReservation } from '../services/reservation';
 import { logout } from '../services/auth';
 
@@ -64,7 +65,7 @@ function MyReservationsPage() {
   };
 
   const handleChangeClick = (r) => {
-    navigate('/calendar', { state: { isEditing: true, editingReservationId: r.id, editingReservation: r } });
+    navigate('/reserve/form', { state: { isEditing: true, editingReservationId: r.id, editingReservation: r } });
   };
 
   const handleLogout = async () => {
@@ -83,15 +84,14 @@ function MyReservationsPage() {
 
   return (
     <div className="page page-reservations">
+      <Breadcrumb
+        items={[
+          { label: 'Top', to: '/' },
+          { label: 'メニュー', to: '/menu' },
+          { label: '予約一覧' },
+        ]}
+      />
       <header className="reservations-header">
-        <button
-          type="button"
-          className="reservations-back"
-          onClick={() => navigate('/menu')}
-          aria-label="メニューに戻る"
-        >
-          ← 戻る
-        </button>
         <h1 className="reservations-title">予約一覧</h1>
       </header>
 
@@ -115,9 +115,6 @@ function MyReservationsPage() {
               <p className="reservation-card-meta">
                 {[r.department || '—', r.purpose || '—'].filter(Boolean).join(' / ')}
               </p>
-              {r.doctor ? (
-                <p className="reservation-card-doctor">担当医：{r.doctor}</p>
-              ) : null}
               <div className="reservation-card-actions">
                 <button
                   type="button"
@@ -145,7 +142,7 @@ function MyReservationsPage() {
       {!loading && !error && sortedReservations.length === 0 && (
         <div className="reservations-empty">
           <p className="reservations-empty-text">現在、予約はありません</p>
-          <button type="button" className="btn btn-primary" onClick={() => navigate('/calendar')}>
+          <button type="button" className="btn btn-primary btn-nav" onClick={() => navigate('/reserve/form')}>
             予約する
           </button>
         </div>
@@ -163,8 +160,7 @@ function MyReservationsPage() {
           <div className="reservation-cancel-dialog">
             <h2 id="cancel-dialog-title" className="reservation-cancel-dialog-title">キャンセルの確認</h2>
             <p className="reservation-cancel-dialog-message">
-              この予約をキャンセルしますか？<br />
-              一度キャンセルすると元に戻せません。
+              この予約をキャンセルしますか？一度キャンセルすると元に戻せません。
             </p>
             <p className="reservation-cancel-dialog-summary">{cancelTarget.summary}</p>
             <div className="reservation-cancel-dialog-actions">
