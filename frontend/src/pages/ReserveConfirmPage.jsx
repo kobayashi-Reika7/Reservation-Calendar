@@ -50,11 +50,16 @@ function ReserveConfirmPage() {
       if (isEditing && editingReservationId) {
         await deleteReservation(user.uid, editingReservationId);
       }
-      const idToken = await user.getIdToken();
+      // forceRefresh: true でトークン期限切れ時も再取得を試みる
+      const idToken = await user.getIdToken(true);
+      if (!idToken?.trim()) {
+        setError('認証情報が取得できませんでした。再ログインしてください。');
+        return;
+      }
       await createReservationApi(idToken, payload);
       setDone(true);
     } catch (err) {
-      // ユーザーには詳細を表示せず汎用メッセージのみ。詳細はコンソールに出力
+      // 401 時は API が返す「再ログイン」メッセージをそのまま表示
       if (typeof console !== 'undefined' && console.error) {
         console.error('[予約確定エラー]', {
           status: err?.status,
@@ -62,7 +67,7 @@ function ReserveConfirmPage() {
           message: err?.message,
         }, err);
       }
-      setError('ご予約を確定できませんでした。お手数ですが、もう一度お試しください。');
+      setError(err?.status === 401 ? (err?.message || 'セッションが切れました。再ログインしてください。') : 'ご予約を確定できませんでした。お手数ですが、もう一度お試しください。');
     } finally {
       setLoading(false);
     }

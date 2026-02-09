@@ -49,13 +49,17 @@ def debug_cors():
 
 
 def _get_bearer_token(authorization: str | None) -> str:
+    """Authorization ヘッダーから Bearer トークンを抽出。401 時は原因をログ出力。"""
     if not authorization:
+        logger.warning("[401] Authorization ヘッダーが未指定です。")
         raise HTTPException(status_code=401, detail="Authorization ヘッダーが必要です。")
     prefix = "Bearer "
     if not authorization.startswith(prefix):
+        logger.warning("[401] Authorization の形式が不正です（Bearer プレフィックスなし）。")
         raise HTTPException(status_code=401, detail="Authorization: Bearer <token> の形式で送信してください。")
     token = authorization[len(prefix):].strip()
     if not token:
+        logger.warning("[401] IDトークンが空です。")
         raise HTTPException(status_code=401, detail="IDトークンが空です。")
     return token
 
@@ -70,12 +74,13 @@ def users_me(authorization: str | None = Header(default=None)):
     try:
         claims = verify_id_token(token)
     except Exception as e:
-        # Admin SDK 未設定などもここに入るため、メッセージは短くする
+        logger.warning("[401] GET /users/me IDトークン検証失敗: %s", e)
         raise HTTPException(status_code=401, detail="IDトークンの検証に失敗しました。") from e
 
     uid = str(claims.get("uid", ""))
     email = str(claims.get("email", ""))
     if not uid:
+        logger.warning("[401] GET /users/me トークンから uid を取得できません。")
         raise HTTPException(status_code=401, detail="トークンから uid を取得できません。")
     store.upsert_user(uid, email)
     return {"uid": uid, "email": email}
@@ -136,9 +141,11 @@ def api_create_reservation(body: CreateReservationBody, authorization: str | Non
     try:
         claims = verify_id_token(token)
     except Exception as e:
+        logger.warning("[401] IDトークン検証失敗: %s", e)
         raise HTTPException(status_code=401, detail="IDトークンの検証に失敗しました。") from e
     uid = str(claims.get("uid", ""))
     if not uid:
+        logger.warning("[401] トークンから uid を取得できません。")
         raise HTTPException(status_code=401, detail="トークンから uid を取得できません。")
 
     department = (body.department or "").strip()

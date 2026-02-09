@@ -108,11 +108,16 @@ export async function getSlots(department, date, idToken) {
 
 /**
  * 予約を確定する。担当医はバックエンドで自動割当。認証必須。
- * @param {string} idToken
+ * @param {string} idToken - Firebase ID トークン（必須）
  * @param {object} body - { department, date, time }
  * @returns {Promise<{ id: string, date: string, time: string, department: string }>}
  */
 export async function createReservationApi(idToken, body) {
+  if (!idToken || typeof idToken !== 'string' || !idToken.trim()) {
+    const err = new Error('認証情報がありません。再ログインしてください。');
+    err.status = 401;
+    throw err;
+  }
   const url = `${getBaseUrl()}/api/reservations`;
   const payload = {
     department: body.department ?? '',
@@ -126,11 +131,13 @@ export async function createReservationApi(idToken, body) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    // ユーザーには詳細を見せず汎用メッセージのみ。詳細はコンソールに出力
+    // 401 時は再ログインを促す。500 時はサーバー案内。その他は汎用メッセージ
     const userMsg =
-      res.status >= 500
-        ? 'サーバーでエラーが発生しました。しばらくしてから再度お試しください。'
-        : '予約を確定できませんでした。入力内容を確認してもう一度お試しください。';
+      res.status === 401
+        ? 'セッションが切れました。再ログインしてください。'
+        : res.status >= 500
+          ? 'サーバーでエラーが発生しました。しばらくしてから再度お試しください。'
+          : '予約を確定できませんでした。入力内容を確認してもう一度お試しください。';
     if (typeof console !== 'undefined' && console.error) {
       console.error('[createReservationApi]', {
         status: res.status,
