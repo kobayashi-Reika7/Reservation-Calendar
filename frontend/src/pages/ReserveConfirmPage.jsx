@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
 import Breadcrumb from '../components/Breadcrumb';
 import ReservationStepHeader from '../components/ReservationStepHeader';
-import { createReservationApi } from '../services/backend';
+import { createReservationApi, invalidateSlotsCache } from '../services/backend';
 import { deleteReservation } from '../services/reservation';
 
 function ReserveConfirmPage() {
@@ -60,6 +60,7 @@ function ReserveConfirmPage() {
         return;
       }
       await createReservationApi(idToken, payload);
+      invalidateSlotsCache();
       setDone(true);
     } catch (err) {
       if (typeof console !== 'undefined' && console.error) {
@@ -77,6 +78,7 @@ function ReserveConfirmPage() {
           const freshToken = await user.getIdToken(true);
           if (freshToken?.trim()) {
             await createReservationApi(freshToken, payload);
+            invalidateSlotsCache();
             setDone(true);
             return;
           }

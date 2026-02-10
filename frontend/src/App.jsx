@@ -97,7 +97,7 @@ function App() {
 
   return (
     <AuthContext.Provider value={user}>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="app">
           <AppRoutes />
         </div>

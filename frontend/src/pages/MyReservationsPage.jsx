@@ -19,6 +19,17 @@ function formatDateTime(dateStr, timeStr) {
   return time ? `${dateFormatted} ${time}` : dateFormatted;
 }
 
+/** 予約が過去かどうか判定（日付+時間で比較） */
+function isPastReservation(dateStr, timeStr) {
+  if (!dateStr) return false;
+  const now = new Date();
+  const todayYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  if (dateStr < todayYmd) return true;
+  if (dateStr === todayYmd && timeStr && timeStr <= nowTime) return true;
+  return false;
+}
+
 function MyReservationsPage() {
   const navigate = useNavigate();
   const user = useAuth();
@@ -77,10 +88,23 @@ function MyReservationsPage() {
     }
   };
 
-  const sortedReservations = useMemo(
-    () => [...reservations].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)),
-    [reservations]
-  );
+  // 今後の予約（日付の近い順）と過去の予約（日付の新しい順）に分離
+  const { upcoming, past } = useMemo(() => {
+    const up = [];
+    const pa = [];
+    for (const r of reservations) {
+      if (isPastReservation(r.date, r.time)) {
+        pa.push(r);
+      } else {
+        up.push(r);
+      }
+    }
+    up.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    pa.sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    return { upcoming: up, past: pa };
+  }, [reservations]);
+
+  const [showHistory, setShowHistory] = useState(false);
 
   return (
     <div className="page page-reservations">
@@ -104,48 +128,81 @@ function MyReservationsPage() {
       {error && <p className="page-error" role="alert">{error}</p>}
       {successMessage && <p className="reservations-success" role="status">{successMessage}</p>}
 
-      {!loading && !error && sortedReservations.length > 0 && (
-        <ul className="reservations-list" aria-label="予約一覧">
-          {sortedReservations.map((r) => (
-            <li key={r.id} className="reservation-card">
-              <p className="reservation-card-datetime">
-                <span className="reservation-card-datetime-icon" aria-hidden>📅</span>
-                {formatDateTime(r.date, r.time)}
-              </p>
-              <p className="reservation-card-meta">
-                {[r.department || '—', r.purpose || '—'].filter(Boolean).join(' / ')}
-              </p>
-              <div className="reservation-card-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary reservation-btn-change"
-                  onClick={() => handleChangeClick(r)}
-                  disabled={!!cancellingId}
-                >
-                  変更する
-                </button>
-                <button
-                  type="button"
-                  className="btn reservation-btn-cancel"
-                  onClick={() => handleCancelClick(r)}
-                  disabled={cancellingId === r.id}
-                  aria-label="この予約をキャンセルする"
-                >
-                  {cancellingId === r.id ? 'キャンセル中…' : 'キャンセル'}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {/* 今後の予約 */}
+      {!loading && !error && upcoming.length > 0 && (
+        <>
+          <h2 className="reservations-section-title">今後の予約</h2>
+          <ul className="reservations-list" aria-label="今後の予約">
+            {upcoming.map((r) => (
+              <li key={r.id} className="reservation-card">
+                <p className="reservation-card-datetime">
+                  <span className="reservation-card-datetime-icon" aria-hidden>📅</span>
+                  {formatDateTime(r.date, r.time)}
+                </p>
+                <p className="reservation-card-meta">
+                  {[r.department || '—', r.purpose || '—'].filter(Boolean).join(' / ')}
+                </p>
+                <div className="reservation-card-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary reservation-btn-change"
+                    onClick={() => handleChangeClick(r)}
+                    disabled={!!cancellingId}
+                  >
+                    変更する
+                  </button>
+                  <button
+                    type="button"
+                    className="btn reservation-btn-cancel"
+                    onClick={() => handleCancelClick(r)}
+                    disabled={cancellingId === r.id}
+                    aria-label="この予約をキャンセルする"
+                  >
+                    {cancellingId === r.id ? 'キャンセル中…' : 'キャンセル'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
-      {!loading && !error && sortedReservations.length === 0 && (
+      {!loading && !error && upcoming.length === 0 && (
         <div className="reservations-empty">
-          <p className="reservations-empty-text">現在、予約はありません</p>
+          <p className="reservations-empty-text">今後の予約はありません</p>
           <button type="button" className="btn btn-primary btn-nav" onClick={() => navigate('/reserve/form')}>
             予約する
           </button>
         </div>
+      )}
+
+      {/* 予約履歴（過去） */}
+      {!loading && !error && past.length > 0 && (
+        <>
+          <button
+            type="button"
+            className="btn btn-text reservations-history-toggle"
+            onClick={() => setShowHistory((v) => !v)}
+          >
+            {showHistory ? '▲ 予約履歴を閉じる' : `▼ 予約履歴を表示（${past.length}件）`}
+          </button>
+          {showHistory && (
+            <ul className="reservations-list reservations-list-past" aria-label="予約履歴">
+              {past.map((r) => (
+                <li key={r.id} className="reservation-card reservation-card-past">
+                  <p className="reservation-card-datetime">
+                    <span className="reservation-card-datetime-icon" aria-hidden>📅</span>
+                    {formatDateTime(r.date, r.time)}
+                  </p>
+                  <p className="reservation-card-meta">
+                    {[r.department || '—', r.purpose || '—'].filter(Boolean).join(' / ')}
+                  </p>
+                  <p className="reservation-card-past-label">受診済み</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
 
       <div className="reservations-footer">

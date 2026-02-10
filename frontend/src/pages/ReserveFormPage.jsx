@@ -198,29 +198,6 @@ function ReserveFormPage() {
     setViewDate(nextStartYmd);
   };
 
-  const handlePrev5Days = () => {
-    if (!weekStart) return;
-    if (!canGoPrevWeek) return;
-    const nextStart = addDays(weekStart, -5);
-    let nextStartYmd = formatYmdLocal(nextStart);
-    if (nextStartYmd < minWeekStartYmd) nextStartYmd = minWeekStartYmd;
-    setWeekStartDate(nextStartYmd);
-    setGridState({ status: 'idle', data: null, error: '' });
-    setSubmitError('');
-    const nextView = nextStartYmd < todayYmd ? todayYmd : nextStartYmd;
-    setViewDate(nextView);
-  };
-
-  const handleNext5Days = () => {
-    if (!weekStart) return;
-    const nextStart = addDays(weekStart, 5);
-    const nextStartYmd = formatYmdLocal(nextStart);
-    setWeekStartDate(nextStartYmd);
-    setGridState({ status: 'idle', data: null, error: '' });
-    setSubmitError('');
-    setViewDate(nextStartYmd);
-  };
-
   const handleSelectDateInWeek = (ymd) => {
     if (!isValidYmd(ymd)) return;
     if (isPastDateYmd(ymd, todayYmd)) return;
@@ -229,7 +206,7 @@ function ReserveFormPage() {
     // キャッシュがあれば gridState は useEffect で即反映される（再取得しない）
   };
 
-  // 週全体の空き枠を1回のAPIリクエストで一括取得しキャッシュ
+  // 週全体の空き枠を取得（getSlotsWeek 内のグローバルキャッシュで重複取得を防止）
   useEffect(() => {
     if (!departmentLabel || !weekDates.length) {
       weekSlotsCacheRef.current = {};
@@ -238,7 +215,6 @@ function ReserveFormPage() {
       return;
     }
     let cancelled = false;
-    weekSlotsCacheRef.current = {};
     setWeekFetchStatus('loading');
     const datesToFetch = weekDates
       .map((d) => d.ymd)
@@ -415,11 +391,16 @@ function ReserveFormPage() {
         </section>
 
         <section className="form-step form-step-grid">
-          <h2 className="form-step-title">4. 時間を選んでください（○予約可 ×不可）</h2>
           {!departmentLabel ? (
-            <p className="form-step-optional" role="status">2. で診療科を選択すると、空き枠が表示されます。</p>
+            <>
+              <h2 className="form-step-title">4. 時間を選んでください（○予約可 ×不可）</h2>
+              <p className="form-step-optional" role="status">2. で診療科を選択すると、空き枠が表示されます。</p>
+            </>
+          ) : gridState.status === 'loading' ? (
+            null /* 読み込み完了まで非表示 */
           ) : (
             <>
+              <h2 className="form-step-title">4. 時間を選んでください（○予約可 ×不可）</h2>
               {/* 週切り替えナビゲーション（○×テーブル直上） */}
               <div className="week-nav" aria-label="週切り替え">
                 <button
@@ -431,27 +412,9 @@ function ReserveFormPage() {
                 >
                   ＜ 前週
                 </button>
-                <button
-                  type="button"
-                  className="week-nav-btn"
-                  onClick={handlePrev5Days}
-                  disabled={!canGoPrevWeek}
-                  aria-disabled={!canGoPrevWeek}
-                  title="5日戻る"
-                >
-                  前の5日
-                </button>
                 <div className="week-nav-range" aria-live="polite">
                   {weekRangeLabel}
                 </div>
-                <button
-                  type="button"
-                  className="week-nav-btn"
-                  onClick={handleNext5Days}
-                  title="5日進む"
-                >
-                  次の5日
-                </button>
                 <button
                   type="button"
                   className="week-nav-btn"
@@ -486,8 +449,6 @@ function ReserveFormPage() {
 
               {isPastDateYmd(viewDate, todayYmd) ? (
                 <p className="form-step-empty" role="status">過去の日付は予約できません。別の日をお選びください。</p>
-              ) : gridState.status === 'loading' ? (
-                <p className="form-step-loading" role="status">空き枠を読み込み中…</p>
               ) : gridState.status === 'error' ? (
                 <div className="form-step-empty form-step-error-wrap" role="alert">
                   <p className="form-step-error-message">

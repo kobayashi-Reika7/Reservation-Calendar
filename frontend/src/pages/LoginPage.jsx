@@ -92,7 +92,7 @@ function LoginPage() {
             </button>
           </div>
         </form>
-        <p className="auth-switch">アカウントをお持ちでない方は<p></p><Link to="/signup">新規登録</Link></p>
+        <p className="auth-switch">アカウントをお持ちでない方は<br /><Link to="/signup">新規登録</Link></p>
       </div>
     </div>
   );

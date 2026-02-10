@@ -1490,6 +1490,36 @@ body {
   color: #6b7280;
   word-break: keep-all;
 }
+/* 予約一覧セクション見出し */
+.reservations-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--medical-blue-dark, #1a365d);
+  margin: 1.25rem 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid var(--medical-blue, #2563eb);
+}
+
+/* 予約履歴トグル */
+.reservations-history-toggle {
+  display: block;
+  margin: 1.25rem auto 0.5rem;
+  font-size: 0.95rem;
+  color: var(--medical-blue, #2563eb);
+  text-align: center;
+}
+
+/* 過去の予約カード（薄く表示） */
+.reservation-card-past {
+  opacity: 0.65;
+  border-style: dashed;
+}
+.reservation-card-past-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
 .reservations-footer {
   margin-top: 1.5rem;
   padding-top: 1rem;

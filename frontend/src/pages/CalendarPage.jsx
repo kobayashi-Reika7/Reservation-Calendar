@@ -66,7 +66,7 @@ function CalendarPage() {
       />
       <h1 className="page-title">予約日を選んでください</h1>
       <p className="page-lead calendar-hint">
-        
+        カレンダーの日付をタップすると、予約入力画面へ進みます。
       </p>
       <Calendar
         selectedDate={selectedDate}

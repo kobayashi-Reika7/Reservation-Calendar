@@ -107,7 +107,39 @@ export async function getSlots(department, date, idToken) {
 }
 
 /**
- * 複数日分の空き枠を一括取得（高速版）。バックエンドで医師取得1回+予約取得1回で全日分を計算。
+ * 空き枠キャッシュ（診療科+日付 → { data, fetchedAt }）。5分間有効。
+ * 週を戻っても同じ診療科・日付なら再取得しない。
+ */
+const _slotsCache = new Map();
+const SLOTS_CACHE_TTL = 5 * 60 * 1000; // 5分
+
+function _slotsCacheKey(department, date) {
+  return `${department}::${date}`;
+}
+
+function _getFromCache(department, date) {
+  const key = _slotsCacheKey(department, date);
+  const entry = _slotsCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > SLOTS_CACHE_TTL) {
+    _slotsCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function _setCache(department, date, data) {
+  _slotsCache.set(_slotsCacheKey(department, date), { data, fetchedAt: Date.now() });
+}
+
+/** 予約確定後にキャッシュを無効化する（空き状況が変わるため） */
+export function invalidateSlotsCache() {
+  _slotsCache.clear();
+}
+
+/**
+ * 複数日分の空き枠を一括取得（高速版・キャッシュ付き）。
+ * キャッシュ済みの日付はスキップし、未取得分のみAPIで取得。5分間有効。
  * @param {string} department - 診療科表示名
  * @param {string[]} dates - YYYY-MM-DD の配列
  * @param {string} [idToken]
@@ -115,7 +147,24 @@ export async function getSlots(department, date, idToken) {
  */
 export async function getSlotsWeek(department, dates, idToken) {
   if (!department || !Array.isArray(dates) || !dates.length) return {};
-  const params = new URLSearchParams({ department, dates: dates.join(',') });
+
+  const result = {};
+  const uncachedDates = [];
+
+  // キャッシュ済みの日付を先に取得
+  for (const d of dates) {
+    const cached = _getFromCache(department, d);
+    if (cached) {
+      result[d] = cached;
+    } else {
+      uncachedDates.push(d);
+    }
+  }
+
+  // 全てキャッシュ済みなら即返却（API呼び出しなし）
+  if (uncachedDates.length === 0) return result;
+
+  const params = new URLSearchParams({ department, dates: uncachedDates.join(',') });
   try {
     const res = await fetch(`${getBaseUrl()}/api/slots/week?${params}`, {
       method: 'GET',
@@ -125,22 +174,21 @@ export async function getSlotsWeek(department, dates, idToken) {
     if (!res.ok) {
       throw new Error(data.detail ?? '空き枠の一括取得に失敗しました。');
     }
-    const result = {};
     for (const item of (Array.isArray(data) ? data : [])) {
       const date = item.date ?? '';
       if (!date) continue;
-      result[date] = {
+      const entry = {
         slots: Array.isArray(item.slots) ? item.slots : [],
         isDemoFallback: false,
       };
+      result[date] = entry;
+      _setCache(department, date, entry);
     }
     return result;
   } catch (err) {
-    // フォールバック: 個別に取得せずデモスロットを返す
     const { getTimeSlots } = await import('../constants/masterData');
     const timeSlots = getTimeSlots();
-    const result = {};
-    for (const d of dates) {
+    for (const d of uncachedDates) {
       result[d] = { slots: getDemoSlotsForDate(d, timeSlots), isDemoFallback: true };
     }
     return result;
